@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/EA_DOGS164A.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/GesFifoTh32.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/app.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/app.h</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/EA_DOGS164A.h</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/system_config/default/system_interrupt.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/main.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/app_SDCard.h</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/app_SDCard.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/framework/driver/spi/src/dynamic/drv_spi.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/system_config/default/system_tasks.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/framework/driver/sdcard/src/dynamic/drv_sdcard.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/system_config/default/system_init.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/framework/system/common/sys_module.h</file>
+            <file>file:/C:/microchip/harmony/v2_06/framework/driver/sdcard/src/drv_sdcard_local.h</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/Mc32gest_UART.c</file>
+            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/GesFifoTh32.h</file>
+            <file>file:/C:/microchip/harmony/v2_06/framework/system/fs/src/dynamic/sys_fs.c</file>
+        </group>
+    </open-files>
+</project-private>
