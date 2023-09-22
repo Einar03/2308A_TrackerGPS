@@ -298,8 +298,8 @@ build/default/production/_ext/1360937237/Mc32gest_UART.o: \
  ../../../../../framework/driver/spi/drv_spi.h \
  ../../../../../framework/driver/spi/drv_spi_definitions.h \
  ../../../../../framework/driver/sdcard/drv_sdcard_mapping.h ../src/app.h \
- ../src/app_sdcard.h ../src/app.h ../src/GesFifoTh32.h \
- ../src/Mc32gest_UART.h
+ ../src/Mc32Debounce.h ../src/app_sdcard.h ../src/app.h \
+ ../src/GesFifoTh32.h ../src/Mc32gest_UART.h ../src/minmea.h
 
 ../src/system_config/default/system_definitions.h:
 
@@ -901,6 +901,8 @@ build/default/production/_ext/1360937237/Mc32gest_UART.o: \
 
 ../src/app.h:
 
+../src/Mc32Debounce.h:
+
 ../src/app_sdcard.h:
 
 ../src/app.h:
@@ -908,3 +910,5 @@ build/default/production/_ext/1360937237/Mc32gest_UART.o: \
 ../src/GesFifoTh32.h:
 
 ../src/Mc32gest_UART.h:
+
+../src/minmea.h:

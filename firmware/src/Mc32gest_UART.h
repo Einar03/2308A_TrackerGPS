@@ -15,6 +15,7 @@
 
 #include <stdint.h>
 #include "GesFifoTh32.h"
+#include "minmea.h"
 
 // ======= DEFINES ======
 #define MESS_SIZE 5
@@ -27,9 +28,11 @@
 void InitFifoComm(void);
 void GetGnssMessage(uint8_t *pData, uint8_t NbBytesToGet);
 void SendGnssMessage(uint8_t *pData, uint8_t nbBytesToSend);
-void GetUsbMessage(uint8_t *pData, uint8_t NbBytesToGet);
-void SendUsbMessage(uint8_t *pData, uint8_t nbBytesToSend);
+bool GetUsbMessage(uint8_t *pData, uint8_t NbBytesToGet);
+void SendUsbMessage(uint8_t *pData, uint16_t nbBytesToSend);
 uint8_t GetGnssCmd(uint8_t *pData);
+//bool ScanGnssCmd(enum minmea_sentence_id sentenceMsge, minmea_messages *frame, uint8_t *pData);
+uint8_t ScanGnssCmd(enum minmea_sentence_id sentenceMsg, uint8_t *pData);
 
 // Descripteur des fifos
 extern S_fifo descrFifoRX;

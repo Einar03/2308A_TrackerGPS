@@ -14,6 +14,7 @@
 #include "GesFifoTh32.h"
 #include "Mc32gest_UART.h"
 #include "stdbool.h"
+#include "minmea.h"
 
 
 //typedef union {
@@ -42,8 +43,8 @@
 //StruMess RxMess;
 
 // Declaration des FIFO pour réception et émission
-#define FIFO_RX_SIZE 200
-#define FIFO_TX_SIZE 200
+#define FIFO_RX_SIZE 260
+#define FIFO_TX_SIZE 260
 
 // Pour le récepteur GNSS
 int8_t GNSSfifoRX[FIFO_RX_SIZE];
@@ -102,14 +103,13 @@ void GetGnssMessage(uint8_t *pData, uint8_t nbBytesToGet)
 
 uint8_t GetGnssCmd(uint8_t *pData)
 {
-    uint8_t NbCharInFifo = 0;
+    uint16_t NbCharInFifo = 0;
     uint8_t start = 0;
     uint8_t nBData = 0;
     uint8_t endData_1 = 0;
     NbCharInFifo = GetReadSize(&descrGNSSFifoRX);
     
-    
-    if(NbCharInFifo >= 30)
+    if(NbCharInFifo >= 20)
     {
         GetCharFromFifo(&descrGNSSFifoRX, &start);
         if(start == '$')
@@ -118,25 +118,84 @@ uint8_t GetGnssCmd(uint8_t *pData)
             
             do
             {
-                endData_1 = *pData;
-                pData++;
-                nBData++;
-                GetCharFromFifo(&descrGNSSFifoRX, pData);
-            }while((endData_1 != 0x0D) && (*pData != 0x0A));
-//            pData++;
-//            GetCharFromFifo(&descrGNSSFifoRX, pData);
+                if(GetReadSize(&descrGNSSFifoRX) > 0)
+                {
+                    endData_1 = *pData;
+                    pData++;
+                    nBData++;
+                    GetCharFromFifo(&descrGNSSFifoRX, pData);
+                }
+            }while(!((endData_1 == 0x0D) && (*pData == 0x0A)));
+//            return nBData;
+            nBData++;
             return nBData;
         }
         else
         {
+//            return nBData;
             return nBData;
         }
     }
     else
     {
+//        return nBData;
         return nBData;
     }
 }
+//bool ScanGnssCmd(enum minmea_sentence_id sentenceMsg, minmea_messages *frame, uint8_t *pData)
+uint8_t ScanGnssCmd(enum minmea_sentence_id sentenceMsg, uint8_t *pData)
+{
+    // 
+    uint8_t nbDatas;
+    // Recupération de la commande réçue
+    nbDatas = GetGnssCmd(pData);
+    if(nbDatas != 0)
+    {
+        // Si la commande voulue a été récupérée
+        if((minmea_sentence_id((char*)pData, true)) == sentenceMsg)
+        {
+//            switch(sentenceMsg)
+//            {
+//                case MINMEA_SENTENCE_GBS :
+//                    break;
+//                case MINMEA_SENTENCE_GGA :
+//                    break;
+//                case MINMEA_SENTENCE_GLL :
+//                    break;
+//                case MINMEA_SENTENCE_GSA :
+//                    break;
+//                case MINMEA_SENTENCE_GST :
+//                    break;
+//                case MINMEA_SENTENCE_GSV :
+//                    break;
+//                case MINMEA_SENTENCE_RMC :
+//                    minmea_parse_rmc(frame, pData);
+//                    break;
+//                case MINMEA_SENTENCE_VTG :
+//                    break;
+//                case MINMEA_SENTENCE_ZDA :
+//                    break;
+//                default:
+//                    break;
+//            }
+            return nbDatas;
+        }
+        else
+        {
+            return 0;
+        }
+        
+    }
+    else
+    {
+        return nbDatas;
+    }
+    
+    
+    
+}        
+
+
 
 // Fonction d'envoi des messages, appel cyclique
 void SendGnssMessage(uint8_t *pData, uint8_t nbBytesToSend)
@@ -165,32 +224,40 @@ void SendGnssMessage(uint8_t *pData, uint8_t nbBytesToSend)
 
 
 
-void GetUsbMessage(uint8_t *pData, uint8_t nbBytesToGet)
+bool GetUsbMessage(uint8_t *pData, uint8_t nbBytesToGet)
 {
     uint8_t i = 0;
+    uint8_t start = 0;
     uint8_t NbCharInFifo = 0;
     
     NbCharInFifo = GetReadSize(&descrUSBFifoRX);
     if(NbCharInFifo >= nbBytesToGet)
     {
-        for(i = 0; i < nbBytesToGet; i++)
+        GetCharFromFifo(&descrUSBFifoRX, &start);
+        if(start == '!')
         {
-            GetCharFromFifo(&descrUSBFifoRX, pData);
+            *pData = start;
             pData++;
+            for(i = 0; i < (nbBytesToGet-1); i++)
+            {
+                GetCharFromFifo(&descrUSBFifoRX, pData);
+                pData++;
+            }
         }
-//        return true;
+        
+        return true;
     }
-//    else
-//    {
-//        return false;
-//    }
+    else
+    {
+        return false;
+    }
 } // GetMessage
 
 // Fonction d'envoi des messages, appel cyclique
-void SendUsbMessage(uint8_t *pData, uint8_t nbBytesToSend)
+void SendUsbMessage(uint8_t *pData, uint16_t nbBytesToSend)
 {
-    uint8_t i = 0;
-    uint8_t FreeSize = 0;
+    uint16_t i = 0;
+    uint16_t FreeSize = 0;
     //selon spec. CCITT il faut initialiser la valeur du Crc16 à  0xFFFF
    
     // Traitement émission à  introduire ICI
@@ -198,18 +265,24 @@ void SendUsbMessage(uint8_t *pData, uint8_t nbBytesToSend)
     FreeSize = GetWriteSpace(&descrUSBFifoTX);
     if (FreeSize >= nbBytesToSend)
     {
-//        for(i = 0; i < nbBytesToSend; i++)
-//        {
-//            // Dépose le message dans le fifo
-//            PutCharInFifo(&descrUSBFifoTX, *pData);
-//            pData++;
-//        }
-        PutCharInFifo(&descrUSBFifoTX, *pData);
-        do
+        for(i = 0; i < nbBytesToSend; i++)
         {
-            pData++;
+            // Dépose le message dans le fifo
             PutCharInFifo(&descrUSBFifoTX, *pData);
-        }while(*pData != 0x0A);
+            if(*pData == 0x0A)
+            {
+                break;
+            }
+            pData++;
+            
+        }
+        
+//        PutCharInFifo(&descrUSBFifoTX, *pData);
+//        do
+//        {
+//            pData++;
+//            PutCharInFifo(&descrUSBFifoTX, *pData);
+//        }while(*pData != 0x0A);
         
     }
     if (FreeSize > 0)
@@ -319,7 +392,7 @@ void SendUsbMessage(uint8_t *pData, uint8_t nbBytesToSend)
  } // end_ISR Usart 1
  void __ISR(_UART_2_VECTOR, ipl4AUTO) _IntHandlerDrvUsartInstance1(void)
  {
-    uint8_t TXSize;
+    uint16_t TXSize;
     uint8_t c;
     bool TxBuffFull;
 

@@ -27,6 +27,10 @@
 //#include "system_config/default/system_config.h"
 #include "system_config/default/system_definitions.h"
 
+// Ajout Einar Farinas
+
+//#include "system/common/sys_module.h" // Pour type de status du SPI
+
 
 //byte bidon pour envoi lorsqu'uniquement une lecture est demandée
 //le spi étant full-duplex, une lecture implique forcément une écriture simultanée
@@ -37,10 +41,15 @@
 
 SPI_STATES spiState = SPI_STATE_UNINITIALIZED;
 
+DRV_HANDLE lcdHandle;
+DRV_SPI_BUFFER_HANDLE lcdBufferHandle,bufferhandle;
+DRV_SPI_CLIENT_DATA lcdCfgData;
+
 //fonction à appeler 1x au démarrage pour init.
 //code repris de la génération du driver par Hamony 1.08
 void SPI_Init(void)
-{
+{   
+    
     // *** init du périph. SPI ***
     PLIB_SPI_Disable(KitSpi1);
 
@@ -85,15 +94,20 @@ void SPI_Init(void)
 void SPI_StartWrite(uint32_t nBytes, uint8_t* pBytesToWrite)
 {
     // Variables locales
-    uint8_t i;
+//    uint8_t i;
+    
+//    SPI_Init();
     
     CS_LCDOff();
        // Ecriture des bytes
-    for(i=0; i<nBytes; i++)
-    {
-        PLIB_SPI_BufferWrite(KitSpi1, *pBytesToWrite);
-        pBytesToWrite++;
-    }
+//    for(i=0; i<nBytes; i++)
+//    {
+//        PLIB_SPI_BufferWrite(KitSpi1, *pBytesToWrite);
+//        pBytesToWrite++;
+//        
+//    }
+    
+    bufferhandle = DRV_SPI_BufferAddWrite2(lcdHandle, (void*)pBytesToWrite, nBytes, NULL, NULL, &lcdBufferHandle);
     spiState = SPI_STATE_BUSY_WRITE;
 }
 
@@ -159,8 +173,18 @@ void SPI_DoTasks(void)
     switch(spiState)
     {
         case SPI_STATE_UNINITIALIZED:
-            SPI_Init();
-            spiState = SPI_STATE_IDLE;
+            lcdHandle = DRV_SPI_Open(DRV_SPI_INDEX_0, DRV_IO_INTENT_READWRITE);
+//                if(lcdHandle != (uintptr_t)NULL)
+            if(lcdHandle != DRV_HANDLE_INVALID)
+            {
+                lcdCfgData.baudRate = 1000000;
+////                SPI_Init();
+                DRV_SPI_ClientConfigure(lcdHandle, &lcdCfgData);
+                spiState = SPI_STATE_IDLE;
+            }
+            
+//            SPI_Init();
+//            spiState = SPI_STATE_IDLE;
             break;
         case SPI_STATE_IDLE:
             // Rien faire
@@ -169,11 +193,27 @@ void SPI_DoTasks(void)
             // Rien faire
             break;
         case SPI_STATE_BUSY_WRITE:
-            if(!PLIB_SPI_IsBusy(KitSpi1))
+//            if(!PLIB_SPI_IsBusy(KitSpi1))
+//            {
+//               CS_LCDOn();
+//               spiState = SPI_STATE_IDLE;
+////               spiState = SPI_STATE_IDLE;
+////               if(DRV_SPI_Status(lcdHandle) == SYS_STATUS_READY)
+////               {
+////                   DRV_SPI_Close(lcdHandle);
+////                   spiState = SPI_STATE_UNINITIALIZED;
+////               }
+//            }
+            if(DRV_SPI_BUFFER_EVENT_COMPLETE & DRV_SPI_BufferStatus(bufferhandle))
             {
-               CS_LCDOn();
-               spiState = SPI_STATE_IDLE;
+                CS_LCDOn();
+                spiState = SPI_STATE_IDLE;
             }
+//            if(DRV_SPI_Status(lcdHandle) == SYS_STATUS_READY)
+//            {
+//                CS_LCDOn();
+//                spiState = SPI_STATE_IDLE;
+//            }
             break;
         case SPI_STATE_BUSY_READ_WRITE:
             if(!PLIB_SPI_IsBusy(KitSpi1) && !PLIB_SPI_ReceiverFIFOIsEmpty(KitSpi1))

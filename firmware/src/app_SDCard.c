@@ -86,9 +86,11 @@ SYS_FS_RESULT res;
 
 static uint16_t Cnt = 0;
 
-bool writeFlag = false;
-
-uint8_t Datas[90];
+static bool writeFlag = false;
+static bool startReadFlag = false;
+static bool endReadFlag = false;
+static uint8_t nbOfData;
+static uint8_t Datas[90];
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Callback Functions
@@ -146,7 +148,7 @@ void APP_SDCARD_Initialize ( void )
 void APP_SDCARD_Tasks ( void )
 {
     // Variables locales
-    uint8_t nbCharToWrite = 0;
+//    uint8_t nbCharToWrite = 0;
     
     
     /* The application task state machine */
@@ -182,6 +184,7 @@ void APP_SDCARD_Tasks ( void )
                 /* UnMount was successful. Mount the disk again */
 
                 app_sdcardData.state = APP_MOUNT_DISK_AGAIN;
+//                app_sdcardData.state = APP_SET_CURRENT_DRIVE;
             }
             break;
 
@@ -205,43 +208,170 @@ void APP_SDCARD_Tasks ( void )
             if(SYS_FS_CurrentDriveSet("/mnt/myDrive") == SYS_FS_RES_FAILURE)
             {
                 /* Error while setting current drive */
+                Error_value = SYS_FS_Error();
                 app_sdcardData.state = APP_ERROR;
             }
             else
             {
                 /* Open a file for reading. */
-                app_sdcardData.state = APP_OPEN_FIRST_FILE;
+//                app_sdcardData.state = APP_OPEN_FIRST_FILE;
+                app_sdcardData.state = APP_IDLE;
             }
 
-        case APP_OPEN_FIRST_FILE:
-//            app_sdcardData.fileHandle = SYS_FS_FileOpen("FILE_TOO_LONG_NAME_EXAMPLE_123.JPG",
-//                    (SYS_FS_FILE_OPEN_READ));
-            app_sdcardData.fileHandle = SYS_FS_FileOpen("test.txt",
-                    (SYS_FS_FILE_OPEN_APPEND));
-            if(app_sdcardData.fileHandle == SYS_FS_HANDLE_INVALID)
-            {
-                Error_value = SYS_FS_Error();
-                /* Could not open the file. Error out*/
-                app_sdcardData.state = APP_ERROR;
-            }
-            else
-            {
-                /* Create a directory. */
-                app_sdcardData.state = APP_CREATE_DIRECTORY;
-            }
-            break;
-
-        case APP_CREATE_DIRECTORY:
-//            if(SYS_FS_DirectoryMake("Dir1") == SYS_FS_RES_FAILURE)
+//        case APP_OPEN_FIRST_FILE:
+////            app_sdcardData.fileHandle = SYS_FS_FileOpen("FILE_TOO_LONG_NAME_EXAMPLE_123.JPG",
+////                    (SYS_FS_FILE_OPEN_READ));
+//            app_sdcardData.fileHandle = SYS_FS_FileOpen("test.txt",
+//                    (SYS_FS_FILE_OPEN_APPEND));
+//            if(app_sdcardData.fileHandle == SYS_FS_HANDLE_INVALID)
 //            {
-//                /* Error while setting current drive */
+//                Error_value = SYS_FS_Error();
+//                /* Could not open the file. Error out*/
 //                app_sdcardData.state = APP_ERROR;
 //            }
 //            else
 //            {
-//                /* Open a second file for writing. */
-//                app_sdcardData.state = APP_OPEN_SECOND_FILE;
+//                /* Create a directory. */
+//                app_sdcardData.state = APP_CREATE_DIRECTORY;
 //            }
+            break;
+        case APP_OPEN_COORDINATES_FILE:
+            if(writeFlag == true)
+            {
+                // Ouvrir le fichier en mode append pour écrire à la fin du fichier
+                app_sdcardData.fileHandle = SYS_FS_FileOpen("Coordinates.txt", (SYS_FS_FILE_OPEN_APPEND));
+                // Si erreur lors de l'ouverture du fichier
+                if(app_sdcardData.fileHandle == SYS_FS_HANDLE_INVALID)
+                {
+                    // Récupérer la valeur de l'erreur
+                    // Pour debogagé
+                    Error_value = SYS_FS_Error();
+                    /* Could not open the file. Error out*/
+                    app_sdcardData.state = APP_ERROR;
+                }
+                // Si pas d'erreur, aller dans l'état d'écriture
+                else
+                {
+                    /* Create a directory. */
+                    app_sdcardData.state = APP_WRITE_FILE;
+                }
+            }
+            else if(startReadFlag == true)
+            {
+                // Ouvrir le fichier en mode lecture
+                app_sdcardData.fileHandle = SYS_FS_FileOpen("Coordinates.txt", (SYS_FS_FILE_OPEN_READ));
+                // Si erreur lors de l'ouverture du fichier
+                if(app_sdcardData.fileHandle == SYS_FS_HANDLE_INVALID)
+                {
+                    // Récupérer la valeur de l'erreur
+                    // Pour debogagé
+                    Error_value = SYS_FS_Error();
+                    /* Could not open the file. Error out*/
+                    app_sdcardData.state = APP_ERROR;
+                }
+                // Si pas d'erreur, aller dans l'état de lecture
+                else
+                {
+                    /* Create a directory. */
+                    app_sdcardData.state = APP_READ_FILE;
+                }
+            }
+            
+            
+            break;
+        case APP_WRITE_FILE:
+//            // Ecriture dans le fichier
+//            res = SYS_FS_FilePrintf(app_sdcardData.fileHandle,"%s", Datas);
+//            
+//            // Si écriture reussie
+//            if(res == SYS_FS_RES_SUCCESS)
+//            {
+//                // Reset flag
+//                writeFlag = false;
+//                // Passer dans l'état de fermeture du fichier
+//                app_sdcardData.state = APP_CLOSE_FILE;
+//            }
+//            else
+//            {
+//                Error_value = SYS_FS_Error();
+//                Error_file = SYS_FS_FileError(app_sdcardData.fileHandle);
+//                //app_sdcardData.state = APP_ERROR;
+//            }
+            
+            /* If read was success, try writing to the new file */
+            if(SYS_FS_FileWrite(app_sdcardData.fileHandle, (const void *)Datas, nbOfData) == -1)
+            {
+                /* Write was not successful. Close the file
+                 * and error out.*/
+                SYS_FS_FileClose(app_sdcardData.fileHandle);
+                app_sdcardData.state = APP_OPEN_COORDINATES_FILE;
+            }
+            else
+            {
+                // Reset flag
+                writeFlag = false;
+                app_sdcardData.state = APP_CLOSE_FILE;
+            }
+
+            
+            break;
+        case APP_READ_FILE:
+//            if(SYS_FS_FileRead(app_sdcardData.fileHandle, (void *)app_sdcardData.data, 512) == -1)
+//            {
+//                /* There was an error while reading the file.
+//                 * Close the file and error out. */
+//
+//                SYS_FS_FileClose(app_sdcardData.fileHandle);
+//                app_sdcardData.state = APP_ERROR;
+//            }
+//            else
+//            {
+//                // Reset flag
+//                startReadFlag = false;
+//                app_sdcardData.state = APP_CLOSE_FILE;
+//            }
+            
+                       
+            if(SYS_FS_FileStringGet(app_sdcardData.fileHandle, (char*)app_sdcardData.data, 90) == -1)
+            {
+                SYS_FS_FileClose(app_sdcardData.fileHandle);
+                app_sdcardData.state = APP_OPEN_COORDINATES_FILE;
+            }
+            else
+            {
+                if(startReadFlag == true)
+                {
+                    // Reset flag
+                    startReadFlag = false;
+                    // set end flag
+                    endReadFlag = true;
+                }
+                SendUsbMessage((uint8_t*)app_sdcardData.data, 90);
+                if(SYS_FS_FileEOF(app_sdcardData.fileHandle) == true)
+                {
+                    // Reset end flag
+                    endReadFlag = false;
+                    app_sdcardData.state = APP_CLOSE_FILE;
+                }
+                
+                
+            }
+            
+                    
+                    
+                    
+            break;
+        case APP_CREATE_DIRECTORY:
+            if(SYS_FS_DirectoryMake("Dir1") == SYS_FS_RES_FAILURE)
+            {
+                /* Error while setting current drive */
+                app_sdcardData.state = APP_ERROR;
+            }
+            else
+            {
+                /* Open a second file for writing. */
+                app_sdcardData.state = APP_OPEN_COORDINATES_FILE;
+            }
             
 //            res = SYS_FS_FilePrintf(app_sdcardData.fileHandle, "Hello World %d", Cnt);
             
@@ -249,18 +379,18 @@ void APP_SDCARD_Tasks ( void )
 //            GetGnssMessage(Datas, 20);
 //            res = SYS_FS_FilePrintf(app_sdcardData.fileHandle,"%s", Datas);
             
-            ClearBuffer();
-            nbCharToWrite = GetGnssCmd(Datas);
-            if(nbCharToWrite != 0)
-            {
-                res = SYS_FS_FilePrintf(app_sdcardData.fileHandle,"%s", Datas);
-            }
-            else
-            {
-                res = SYS_FS_RES_FAILURE;
-            }
-            
-            Cnt++;
+//            ClearBuffer();
+//            nbCharToWrite = GetGnssCmd(Datas);
+//            if(nbCharToWrite != 0)
+//            {
+//                res = SYS_FS_FilePrintf(app_sdcardData.fileHandle,"%s", Datas);
+//            }
+//            else
+//            {
+//                res = SYS_FS_RES_FAILURE;
+//            }
+//            
+//            Cnt++;
             
 //            SYS_FS_FileWrite(app_sdcardData.fileHandle1, (const void *)app_sdcardData.data, 512) == -1;
             if(res == SYS_FS_RES_SUCCESS)
@@ -279,66 +409,69 @@ void APP_SDCARD_Tasks ( void )
                     
             break;
 
-        case APP_OPEN_SECOND_FILE:
-            /* Open a second file inside "Dir1" */
-            app_sdcardData.fileHandle1 = SYS_FS_FileOpen("Dir1/FILE_TOO_LONG_NAME_EXAMPLE_123_1.JPG",
-                    (SYS_FS_FILE_OPEN_WRITE));
+//        case APP_OPEN_SECOND_FILE:
+//            /* Open a second file inside "Dir1" */
+//            app_sdcardData.fileHandle1 = SYS_FS_FileOpen("Dir1/FILE_TOO_LONG_NAME_EXAMPLE_123_1.JPG",
+//                    (SYS_FS_FILE_OPEN_WRITE));
+//
+//            if(app_sdcardData.fileHandle1 == SYS_FS_HANDLE_INVALID)
+//            {
+//                /* Could not open the file. Error out*/
+//                app_sdcardData.state = APP_ERROR;
+//            }
+//            else
+//            {
+//                /* Read from one file and write to another file */
+//                app_sdcardData.state = APP_READ_WRITE_TO_FILE;
+//            }
+//            break;
 
-            if(app_sdcardData.fileHandle1 == SYS_FS_HANDLE_INVALID)
-            {
-                /* Could not open the file. Error out*/
-                app_sdcardData.state = APP_ERROR;
-            }
-            else
-            {
-                /* Read from one file and write to another file */
-                app_sdcardData.state = APP_READ_WRITE_TO_FILE;
-            }
-
-        case APP_READ_WRITE_TO_FILE:
-
-            if(SYS_FS_FileRead(app_sdcardData.fileHandle, (void *)app_sdcardData.data, 512) == -1)
-            {
-                /* There was an error while reading the file.
-                 * Close the file and error out. */
-
-                SYS_FS_FileClose(app_sdcardData.fileHandle);
-                app_sdcardData.state = APP_ERROR;
-            }
-            else
-            {
-                /* If read was success, try writing to the new file */
-                if(SYS_FS_FileWrite(app_sdcardData.fileHandle1, (const void *)app_sdcardData.data, 512) == -1)
-                {
-                    /* Write was not successful. Close the file
-                     * and error out.*/
-                    SYS_FS_FileClose(app_sdcardData.fileHandle1);
-                    app_sdcardData.state = APP_ERROR;
-                }
-                else if(SYS_FS_FileEOF(app_sdcardData.fileHandle) == 1)    /* Test for end of file */
-                {
-                    /* Continue the read and write process, untill the end of file is reached */
-
-                    app_sdcardData.state = APP_CLOSE_FILE;
-                }
-            }
-            break;
+//        case APP_READ_WRITE_TO_FILE:
+//
+//            if(SYS_FS_FileRead(app_sdcardData.fileHandle, (void *)app_sdcardData.data, 512) == -1)
+//            {
+//                /* There was an error while reading the file.
+//                 * Close the file and error out. */
+//
+//                SYS_FS_FileClose(app_sdcardData.fileHandle);
+//                app_sdcardData.state = APP_ERROR;
+//            }
+//            else
+//            {
+//                /* If read was success, try writing to the new file */
+//                if(SYS_FS_FileWrite(app_sdcardData.fileHandle1, (const void *)app_sdcardData.data, 512) == -1)
+//                {
+//                    /* Write was not successful. Close the file
+//                     * and error out.*/
+//                    SYS_FS_FileClose(app_sdcardData.fileHandle1);
+//                    app_sdcardData.state = APP_ERROR;
+//                }
+//                else if(SYS_FS_FileEOF(app_sdcardData.fileHandle) == 1)    /* Test for end of file */
+//                {
+//                    /* Continue the read and write process, untill the end of file is reached */
+//
+//                    app_sdcardData.state = APP_CLOSE_FILE;
+//                }
+//            }
+//            break;
 
         case APP_CLOSE_FILE:
             /* Close both files */
             SYS_FS_FileClose(app_sdcardData.fileHandle);
 //            SYS_FS_FileClose(app_sdcardData.fileHandle1);
              /* The test was successful. Lets idle. */
-            if(Cnt < 65500)
-            {
-                app_sdcardData.state = APP_OPEN_FIRST_FILE;
-                SDCard_RToggle();
-            }
-            else
-            {
-                app_sdcardData.state = APP_IDLE;
-                SDCard_ROff();
-            }
+//            if(Cnt < 65500)
+//            {
+//                app_sdcardData.state = APP_OPEN_FIRST_FILE;
+//                SDCard_RToggle();
+//            }
+//            else
+//            {
+//                app_sdcardData.state = APP_IDLE;
+//                SDCard_ROff();
+//            }
+            SDCard_GToggle();
+            app_sdcardData.state = APP_IDLE;
             break;
 
         case APP_IDLE:
@@ -346,12 +479,16 @@ void APP_SDCARD_Tasks ( void )
              * has completed successfully. Switch on
              * green LED. */
             //BSP_LEDOn(APP_SUCCESS_LED);
+            
+            if((writeFlag == true) || (startReadFlag == true))
+            {
+               app_sdcardData.state =  APP_OPEN_COORDINATES_FILE;
+            }
             break;
         case APP_ERROR:
             /* The appliction comes here when the demo
              * has failed. Switch on the red LED.*/
             //BSP_LEDOn(APP_FAILURE_LED);
-            Error_value = SYS_FS_Error();
             break;
         default:
             break;
@@ -368,14 +505,48 @@ void APP_UpdateSDCardState(APP_SDCARD_STATES NewState)
     app_sdcardData.state = NewState;
 }
 
-void SetWriteFlag(void)
+void SetSDCardWriteFlag(void)
 {
     writeFlag = true;
 }
 
-void ResetWriteFlag(void)
+void ResetSDCardWriteFlag(void)
 {
     writeFlag = false;
+}
+
+bool GetSDCardWriteFlag(void)
+{
+    return writeFlag;
+}
+
+void SetSDCardReadFlag(void)
+{
+    startReadFlag = true;
+}
+
+void ResetSDCardReadFlag(void)
+{
+    startReadFlag = false;
+}
+
+bool GetSDCardReadFlag(void)
+{
+    return startReadFlag;
+}
+void SetEndReadFlag(void)
+{
+    endReadFlag = true;
+}
+
+void ResetEndReadFlag(void)
+{
+    endReadFlag = false;
+}
+
+bool GetEndReadFlag(void)
+{
+    return endReadFlag;
 }
 
 void ClearBuffer(void)
@@ -386,6 +557,31 @@ void ClearBuffer(void)
     {
         Datas[i] = 0;
     }
+}
+
+void SetBuffer(uint8_t *pData, uint8_t nbDatas)
+{
+    ClearBuffer();
+    nbOfData = nbDatas;
+    strncpy((char*)Datas, (char*)pData, nbDatas);
+}
+
+void GetCmdToSend(uint8_t *pData)
+{
+    uint16_t i;
+    uint8_t *pSDCardData = (uint8_t*)app_sdcardData.data;
+    
+    for(i=0;i<90;i++)
+    {
+        *pData = *pSDCardData;
+        pData++;
+        pSDCardData++;
+        if(*pSDCardData == 0x0A)
+        {
+            break;
+        }
+    }
+    
 }
 
 

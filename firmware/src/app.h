@@ -58,6 +58,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <stdlib.h>
 #include "system_config.h"
 #include "system_definitions.h"
+#include "Mc32Debounce.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -74,8 +75,12 @@ extern "C" {
 // *****************************************************************************
 
 #define CNT_TIME        100
-#define NB_ACTIONS        9  
+#define NB_ACTIONS        9
+    
+// Boutons
 #define TIMEBTN          60
+#define NB_PRESS_BTN_MAX  2
+// Intervalle d'enregistrement
 #define TIME_SPAN_MAX   900 // pour 15 min (900) 
 #define BLINK_PER        10 // Pour 10 Hz (10 == 100 ms)
 // Niveau de batterie
@@ -85,6 +90,8 @@ extern "C" {
 #define BAT_50          3.35
 #define BAT_30          3.21
 #define BAT_10          3.07
+    
+#define USB_TIME_OUT     200
     
 // *****************************************************************************
 /* Application states
@@ -111,7 +118,8 @@ typedef enum
 typedef enum
 {
 	/* Application's state machine's initial state. */
-	IDLE = 0,
+    INIT = 0,
+	IDLE,
 	WAIT_FOR_CONNECTION,
     READY,
     RUN,
@@ -232,6 +240,7 @@ void APP_UpdateState (APP_STATES newState);
 void Timer1_CallBack(void);
 void ResetBuffer(uint8_t *Buffer);
 APP_STATES AppGetState(void);
+void ScanButtons(S_SwitchDescriptor *DescriptButton, bool ButtonState);
 
 #endif /* _APP_H */
 

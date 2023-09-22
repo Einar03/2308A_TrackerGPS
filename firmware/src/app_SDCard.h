@@ -91,24 +91,33 @@ typedef enum
 
 	/* The app unmounts the disk */
     APP_UNMOUNT_DISK,
-
-	/* The app mounts the disk again */
+       
+//	/* The app mounts the disk again */
     APP_MOUNT_DISK_AGAIN,
 
-        /* Set the current drive */
+    /* Set the current drive */
     APP_SET_CURRENT_DRIVE,
+    
+    /* Ouvrir le fichier de sauvegarde de coordonnées*/
+    APP_OPEN_COORDINATES_FILE,
+            
+    /* Sauvegarder les coordonnées*/
+    APP_WRITE_FILE,
+    
+    /* Lire les coordonnées*/
+    APP_READ_FILE,
+    
+//	/* The app opens the file to read */
+//    APP_OPEN_FIRST_FILE,
 
-	/* The app opens the file to read */
-    APP_OPEN_FIRST_FILE,
-
-        /* Create directory */
+    /* Create directory */
     APP_CREATE_DIRECTORY,
 
-        /* The app opens the file to write */
-    APP_OPEN_SECOND_FILE,
+//    /* The app opens the file to write */
+//    APP_OPEN_SECOND_FILE,
 
-    /* The app reads from a file and writes to another file */
-    APP_READ_WRITE_TO_FILE,
+//    /* The app reads from a file and writes to another file */
+//    APP_READ_WRITE_TO_FILE,
 
     /* The app closes the file*/
     APP_CLOSE_FILE,
@@ -118,6 +127,8 @@ typedef enum
 
     /* An app error has occurred */
     APP_ERROR,
+    
+     
 
 } APP_SDCARD_STATES;
 
@@ -238,9 +249,18 @@ void APP_SDCARD_Tasks ( void );
 
 APP_SDCARD_STATES SDCard_GetState(void);
 void APP_UpdateSDCardState(APP_SDCARD_STATES NewState);
-void SetWriteFlag(void);
-void ResetWriteFlag(void);
+void SetSDCardWriteFlag(void);
+void ResetSDCardWriteFlag(void);
+bool GetSDCardWriteFlag(void);
+void SetSDCardReadFlag(void);
+void ResetSDCardReadFlag(void);
+bool GetSDCardReadFlag(void);
+void SetEndReadFlag(void);
+void ResetEndReadFlag(void);
+bool GetEndReadFlag(void);
 void ClearBuffer(void);
+void SetBuffer(uint8_t *pData, uint8_t nbDatas);
+void GetCmdToSend(uint8_t *pData);
 
 #endif /* _APP_H */
 /*******************************************************************************

@@ -251,6 +251,7 @@ extern "C" {
     void LCD_EADOGS_WakeUp(s_EADOGS_REG_VAL *registerValue);
     void LCD_CursorHome(s_EADOGS_REG_VAL *registerValue);
     void LCD_EADOGS_GoTo(s_EADOGS_REG_VAL *registerValue, uint8_t x, uint8_t y);
+    void LCD_EADOGS_GoHome(s_EADOGS_REG_VAL *registerValue);
     void LCD_Printf(const char *format, ...);
     
     void LCD_EADOGS_SendData(RS_RW operation, uint8_t functionVal);

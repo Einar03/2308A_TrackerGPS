@@ -48,6 +48,15 @@ typedef struct {
 typedef struct {
            E_DebouceStates DebounceState;    // état de l'antirebond
            uint8_t     DebounceCounter;         // compteur
+           //=========================================================
+           // Ajout par Einar Farinas
+           // Compteur du nombre d'appuis
+           uint8_t nbTouchCnt;
+           // Pour sauvegarde du nombre d'appuis
+           uint8_t nbTouch;
+           // Compmteur de temps pour valider le nombre d'appuis
+           uint8_t TimeoutCnt;   
+           //=========================================================
            s_bits bits;
 } S_SwitchDescriptor;
 

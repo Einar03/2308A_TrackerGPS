@@ -355,8 +355,16 @@ void LCD_BlinkCursor(s_EADOGS_REG_VAL *registerValue, bool enable)
 
 void LCD_EADOGS_GoTo(s_EADOGS_REG_VAL *registerValue, uint8_t x, uint8_t y)
 {
-    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
-    LCD_EADOGS_SendData(INSTRUCTION, (0x80 | (x+16*(y-1))));
+//    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
+    LCD_EADOGS_SendData(INSTRUCTION, (0x80 | ((x-1)+32*(y-1))));
+    delay_usCt(5);
+}
+
+void LCD_EADOGS_GoHome(s_EADOGS_REG_VAL *registerValue)
+{
+//    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
+    LCD_EADOGS_SendData(INSTRUCTION, 2);
+    delay_usCt(10);
 }
 
 void LCD_Printf(const char *format, ...)

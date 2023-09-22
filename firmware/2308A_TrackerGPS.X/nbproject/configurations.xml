@@ -49,6 +49,7 @@
         <itemPath>../src/Mc32Delays.h</itemPath>
         <itemPath>../src/Mc32_SPI_StateMachine.h</itemPath>
         <itemPath>../src/app_SDCard.h</itemPath>
+        <itemPath>../src/minmea.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f1" displayName="driver" projectFiles="true">
@@ -239,6 +240,7 @@
         <itemPath>../src/Mc32Delays.c</itemPath>
         <itemPath>../src/Mc32_SPI_StateMachine.c</itemPath>
         <itemPath>../src/app_SDCard.c</itemPath>
+        <itemPath>../src/minmea.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f1" displayName="driver" projectFiles="true">

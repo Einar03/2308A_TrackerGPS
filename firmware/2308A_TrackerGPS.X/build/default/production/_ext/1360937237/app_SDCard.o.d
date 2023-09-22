@@ -299,7 +299,8 @@ build/default/production/_ext/1360937237/app_SDCard.o: \
  ../../../../../framework/driver/spi/drv_spi.h \
  ../../../../../framework/driver/spi/drv_spi_definitions.h \
  ../../../../../framework/driver/sdcard/drv_sdcard_mapping.h ../src/app.h \
- ../src/app_sdcard.h ../src/Mc32gest_UART.h ../src/GesFifoTh32.h
+ ../src/Mc32Debounce.h ../src/app_sdcard.h ../src/Mc32gest_UART.h \
+ ../src/GesFifoTh32.h ../src/minmea.h
 
 ../src/app_SDCard.h:
 
@@ -903,8 +904,12 @@ build/default/production/_ext/1360937237/app_SDCard.o: \
 
 ../src/app.h:
 
+../src/Mc32Debounce.h:
+
 ../src/app_sdcard.h:
 
 ../src/Mc32gest_UART.h:
 
 ../src/GesFifoTh32.h:
+
+../src/minmea.h:

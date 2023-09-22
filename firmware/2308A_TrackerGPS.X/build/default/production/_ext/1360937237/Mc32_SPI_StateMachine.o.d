@@ -299,7 +299,8 @@ build/default/production/_ext/1360937237/Mc32_SPI_StateMachine.o: \
  ../../../../../framework/driver/spi/drv_spi.h \
  ../../../../../framework/driver/spi/drv_spi_definitions.h \
  ../../../../../framework/driver/sdcard/drv_sdcard_mapping.h ../src/app.h \
- ../src/system_config/default/system_definitions.h ../src/app_sdcard.h
+ ../src/system_config/default/system_definitions.h ../src/Mc32Debounce.h \
+ ../src/app_sdcard.h
 
 ../src/Mc32_SPI_StateMachine.h:
 
@@ -904,5 +905,7 @@ build/default/production/_ext/1360937237/Mc32_SPI_StateMachine.o: \
 ../src/app.h:
 
 ../src/system_config/default/system_definitions.h:
+
+../src/Mc32Debounce.h:
 
 ../src/app_sdcard.h:
