@@ -55,6 +55,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_definitions.h"
 #include "../apps/PROJ/2308A_TrackerGPS/firmware/src/Mc32_SPI_StateMachine.h"
 
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: System "Tasks" Routine
@@ -78,12 +79,12 @@ void SYS_Tasks ( void )
     SYS_TMR_Tasks(sysObj.sysTmr);
 
     /* Maintain Device Drivers */
-    DRV_SDCARD_Tasks(sysObj.drvSDCard);
+//    DRV_SDCARD_Tasks(sysObj.drvSDCard);
 
     /* Maintain Middleware & Other Libraries */
 
     /* Maintain the application's state machine. */
-    APP_SDCARD_Tasks();
+//    APP_SDCARD_Tasks();
     SPI_DoTasks();
     APP_Tasks();
    

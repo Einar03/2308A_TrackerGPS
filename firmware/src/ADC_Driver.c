@@ -6,6 +6,7 @@
  * Project: 2220_AlimStepDown
  * 
  * Description: Fichier permetant la gestion des ADCs du projet 2220
+ *  Adaptée pour le proje 2308A trackerGPS
  * 
  * Version: V1
  *

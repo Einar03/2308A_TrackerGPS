@@ -300,7 +300,7 @@ build/default/production/_ext/1360937237/app.o: ../src/app.c ../src/app.h \
  ../../../../../framework/driver/sdcard/drv_sdcard_mapping.h ../src/app.h \
  ../src/app_sdcard.h ../src/Mc32Debounce.h ../src/Mc32gest_UART.h \
  ../src/GesFifoTh32.h ../src/minmea.h ../src/ADC_Driver.h \
- ../src/EA_DOGS164A.h ../src/Mc32_SPI_StateMachine.h
+ ../src/EA_DOGS164A.h ../src/Mc32_SPI_StateMachine.h ../src/Mc32Delays.h
 
 ../src/app.h:
 
@@ -919,3 +919,5 @@ build/default/production/_ext/1360937237/app.o: ../src/app.c ../src/app.h \
 ../src/EA_DOGS164A.h:
 
 ../src/Mc32_SPI_StateMachine.h:
+
+../src/Mc32Delays.h:

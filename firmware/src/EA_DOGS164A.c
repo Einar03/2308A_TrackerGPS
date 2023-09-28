@@ -1,17 +1,15 @@
 /* ************************************************************************** */
 /** Descriptive File Name
 
-  @Company
-    Company Name
+  Auteur : Einar Farinas
+  Date : 25/09/2023
 
   @File Name
-    filename.c
+    EA_DOGS164A.c
 
   @Summary
-    Brief description of the file.
-
-  @Description
-    Describe the purpose of this file.
+    Librarie pour commander  avec le BUS SPI des écrans EA DOGS utilisant
+	le controlleur SSD1803A
  */
 /* ************************************************************************** */
 
@@ -78,46 +76,27 @@ static const uint8_t BitReverseTable256[256] =
 
 /** 
   @Function
-    int ExampleLocalFunctionName ( int param1, int param2 ) 
-
-  @Summary
-    Brief one-line description of the function.
+    void LCD_EADOGS_Init (s_EADOGS_REG_VAL *registerValue, bool dataLength, uint8_t nbLines, uint8_t viewOrientation, bool fontWidth, bool invertCursor) 
 
   @Description
-    Full description, explaining the purpose and usage of the function.
-    <p>
-    Additional description in consecutive paragraphs separated by HTML 
-    paragraph breaks, as necessary.
-    <p>
-    Type "JavaDoc" in the "How Do I?" IDE toolbar for more information on tags.
-
-  @Precondition
-    List and describe any required preconditions. If there are no preconditions,
-    enter "None."
+   Fonction pour l'initalisation du LCD avec paramétres de configuration
 
   @Parameters
-    @param param1 Describe the first parameter to the function.
+    @param *registerValue pour la structure des registres.
     
-    @param param2 Describe the second parameter to the function.
-
-  @Returns
-    List (if feasible) and describe the return values of the function.
-    <ul>
-      <li>1   Indicates an error occurred
-      <li>0   Indicates an error did not occur
-    </ul>
-
-  @Remarks
-    Describe any special behavior not described above.
-    <p>
-    Any additional remarks.
-
+    @param dataLength pour le nombre bit par trame. true = 8 bits, false = 4 bits
+  
+    @param nbLines pour le nombre de lignes, 2 à 4
+ 
+    @param viewOrientation pour l'orientation de du texte. 0x05 pour top, 0x06 pour bottom
+  
+    @param fontWidth pour la taille du texte. false pour 5 dots, true pour 6 dots
+  
+    @param invertCursor pour inversion du curseur.  true activé, false desactivé
+  
   @Example
     @code
-    if(ExampleFunctionName(1, 2) == 0)
-    {
-        return 3;
-    }
+    LCD_EADOGS_Init(&RegVal, BUS_8BITS, 4, BOTTOM_VIEW, false, false);
  */
 void LCD_EADOGS_Init(s_EADOGS_REG_VAL *registerValue, bool dataLength, uint8_t nbLines, uint8_t viewOrientation, bool fontWidth, bool invertCursor)
 {
@@ -212,28 +191,18 @@ void LCD_EADOGS_Init(s_EADOGS_REG_VAL *registerValue, bool dataLength, uint8_t n
     delay_msCt(1);
     
 }
-
-/* ************************************************************************** */
-/* ************************************************************************** */
-// Section: Interface Functions                                               */
-/* ************************************************************************** */
-/* ************************************************************************** */
-
-/*  A brief description of a section can be given directly below the section
-    banner.
- */
-
-// *****************************************************************************
-
 /** 
   @Function
-    int ExampleInterfaceFunctionName ( int param1, int param2 ) 
+    void LCD_EADOGS_ChangeView(s_EADOGS_REG_VAL *registerValue, uint8_t viewOrientation)
 
-  @Summary
-    Brief one-line description of the function.
+  @Description
+   Fonction pour changer l'orientation de l'écran LCD
 
-  @Remarks
-    Refer to the example_file.h interface header for function usage details.
+  @Parameters
+    @param *registerValue pour la structure des registres. 
+    
+    @param viewOrientation TOP_VIEW = 0x05, BOTTOM_VIEW = 0x06
+
  */
 void LCD_EADOGS_ChangeView(s_EADOGS_REG_VAL *registerValue, uint8_t viewOrientation)
 {
@@ -245,35 +214,78 @@ void LCD_EADOGS_ChangeView(s_EADOGS_REG_VAL *registerValue, uint8_t viewOrientat
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
 }
 
+/** 
+  @Function
+    void LCD_EADOGS_ContrastSet(s_EADOGS_REG_VAL *registerValue, uint8_t contrast)
 
+  @Description
+   Fonction pour changer le contraste du LCD
+
+  @Parameters
+    @param *registerValue pour la structure des registres. 
+    
+    @param contrast valeur de 0 à 63
+
+ */
 void LCD_EADOGS_ContrastSet(s_EADOGS_REG_VAL *registerValue, uint8_t contrast)
 {
+    // Valeur rentré < que le max (0x3F)
+    // Fixer la valeur au max
     if(contrast > 0x3F)
     {
         contrast = 0x3F;
     }
-    
+    // Application de la valeur mise
     SetIS(registerValue);
     registerValue->power_Display_Contrast |= (contrast >> 4);
+    // Envoi des données
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->power_Display_Contrast);
     LCD_EADOGS_SendData(INSTRUCTION, (0x7A|(contrast &= 0x0F)));
     ResetIS(registerValue);
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
 }
+/** 
+  @Function
+    void LCD_EADOGS_CharTableSelect(s_EADOGS_REG_VAL *registerValue, uint8_t table)
 
+  @Description
+    Fonction pour changer la table de caractères
+
+  @Parameters
+    @param *registerValue pour la structure des registres. 
+    
+    @param table,  valeurs 0 à 2
+
+ */
 void LCD_EADOGS_CharTableSelect(s_EADOGS_REG_VAL *registerValue, uint8_t table)
 {
+    // si valeur < le max 
+    // Fixer au max
     if(table > 2)
     {
         table = 2;
     }
     
+    // Envoie des trames
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE1);
     LCD_EADOGS_SendData(INSTRUCTION, CHAR_TABLE_SELECT); // 0x72
     LCD_EADOGS_SendData(DATA_WRITE, (table << 2));
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
 }
+/** 
+  @Function
+    void LCD_EADOGS_LinesSet(s_EADOGS_REG_VAL *registerValue, uint8_t nbLines)
+
+  @Description
+    Fonction pour changer le nombre de linges sur le LCD
+
+  @Parameters
+    @param *registerValue pour la structure des registres. 
+    
+    @param nbLines,  valeurs 1 à 3
+
+ */
 void LCD_EADOGS_LinesSet(s_EADOGS_REG_VAL *registerValue, uint8_t nbLines)
 {
     SetNbLines(registerValue, nbLines);
@@ -284,10 +296,29 @@ void LCD_EADOGS_LinesSet(s_EADOGS_REG_VAL *registerValue, uint8_t nbLines)
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->extendedFunctionSet); // 4 lignes
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
 }
+/** 
+  @Function
+    void LCD_EADOGS_Clear(void)
+
+  @Description
+    Fonction pour effacer l'écran LCD
+ * 
+ */
 void LCD_EADOGS_Clear(void)
 {
     LCD_EADOGS_SendData(INSTRUCTION, CLEAR_LCD);
 }
+/** 
+  @Function
+    void LCD_EADOGS_Sleep(s_EADOGS_REG_VAL *registerValue)
+
+  @Description
+    Fonction pour mettre l'écran LCD en état de veille
+
+  @Parameters
+    @param *registerValue pour la structure des registres. 
+
+ */
 void LCD_EADOGS_Sleep(s_EADOGS_REG_VAL *registerValue)
 {
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
@@ -296,6 +327,17 @@ void LCD_EADOGS_Sleep(s_EADOGS_REG_VAL *registerValue)
     LCD_EADOGS_SendData(INSTRUCTION, SLEEP_ENABLE);  // Bit1 indiqué dans le datasheet à vérifier si fonction
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0); // optional peut être
 }
+/** 
+  @Function
+    void LCD_EADOGS_WakeUp(s_EADOGS_REG_VAL *registerValue)
+
+  @Description
+    Fonction pour réveiller l'écran LCD
+
+  @Parameters
+    @param *registerValue pour la structure des registres. 
+
+ */
 void LCD_EADOGS_WakeUp(s_EADOGS_REG_VAL *registerValue)
 {
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE1);
@@ -303,11 +345,57 @@ void LCD_EADOGS_WakeUp(s_EADOGS_REG_VAL *registerValue)
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
     LCD_EADOGS_SendData(INSTRUCTION, (registerValue->displayControl | BIT2));
 }
-void LCD_CursorHome(s_EADOGS_REG_VAL *registerValue)
+/** 
+  @Function
+    void LCD_EADOGS_GoHome(s_EADOGS_REG_VAL *registerValue)
+
+  @Description
+    Fonction pour déplacer le curseur à la position initial
+
+  @Parameters
+    @param *registerValue pour la structure des registres. 
+
+ */
+void LCD_EADOGS_GoHome(s_EADOGS_REG_VAL *registerValue)
 {
-    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
-    LCD_EADOGS_SendData(INSTRUCTION, 0x02);
+//    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
+    LCD_EADOGS_SendData(INSTRUCTION, 2);
+    delay_usCt(10);
 }
+/** 
+  @Function
+    void LCD_EADOGS_GoTo(s_EADOGS_REG_VAL *registerValue, uint8_t x, uint8_t y)
+
+  @Description
+    Fonction pour déplacer le curseur à la position voulue
+
+  @Parameters
+    @param *registerValue pour la structure des registres. 
+    
+    @param x, colonne de 1 à 16
+  
+    @param y, linge de 1 à 4
+
+ */
+void LCD_EADOGS_GoTo(s_EADOGS_REG_VAL *registerValue, uint8_t x, uint8_t y)
+{
+//    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
+    LCD_EADOGS_SendData(INSTRUCTION, (0x80 | ((x-1)+32*(y-1))));
+    delay_usCt(5);
+}
+/** 
+  @Function
+    void LCD_EADOGS_SendData(RS_RW operation, uint8_t functionVal)
+
+  @Description
+    Fonction pour les données au registres du LCD
+
+  @Parameters
+    @param operation, pour la valeur du byte de start. 
+    
+    @param functionVal, pour la valeur à envoyer
+
+ */
 void LCD_EADOGS_SendData(RS_RW operation, uint8_t functionVal)
 {
     s_EADOG_Data dataToSend;
@@ -338,35 +426,21 @@ void LCD_EADOGS_SendData(RS_RW operation, uint8_t functionVal)
     // envoi de la commande
     SPI_StartWrite(3, &dataToSend.startByte);
 }
+/** 
+  @Function
+    void LCD_Printf(const char *format, ...)
 
-void LCD_BlinkCursor(s_EADOGS_REG_VAL *registerValue, bool enable)
-{
-    if(enable)
-    {
-        registerValue->displayControl |= BIT0;
-    }
-    else
-    {
-        registerValue->displayControl &= ~BIT0;
-    }
-    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
-    LCD_EADOGS_SendData(INSTRUCTION, registerValue->displayControl);
-}
+  @Description
+    Fonctin pour écrire sur l'écran LCD
 
-void LCD_EADOGS_GoTo(s_EADOGS_REG_VAL *registerValue, uint8_t x, uint8_t y)
-{
-//    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
-    LCD_EADOGS_SendData(INSTRUCTION, (0x80 | ((x-1)+32*(y-1))));
-    delay_usCt(5);
-}
+  @Parameters
+    @param *format pour le texte à écrire
+  
+   @Example
+    @code
+    LCD_Printf("Niveau Batterie     %1.2f",V_Bat);
 
-void LCD_EADOGS_GoHome(s_EADOGS_REG_VAL *registerValue)
-{
-//    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
-    LCD_EADOGS_SendData(INSTRUCTION, 2);
-    delay_usCt(10);
-}
-
+ */
 void LCD_Printf(const char *format, ...)
 {
     uint8_t i = 0;
@@ -388,6 +462,20 @@ void LCD_Printf(const char *format, ...)
         Buffer[i] = 0;
     }
 }
+/** 
+  @Function
+    void SetNbLines(s_EADOGS_REG_VAL *registerValue, uint8_t nbLines)
+
+  @Description
+    Fonction pour changer la valeur des registres en fonction du nombre 
+    de lignes voulus
+
+  @Parameters
+    @param *registerValue pour la structure des registres.
+  
+    @param *nbLines, pour le nombre de lignes
+
+ */
 void SetNbLines(s_EADOGS_REG_VAL *registerValue, uint8_t nbLines)
 {
     switch(nbLines)
@@ -420,27 +508,49 @@ void SetNbLines(s_EADOGS_REG_VAL *registerValue, uint8_t nbLines)
             break;
     }
 }
+/** 
+  @Function
+    void SetIS(s_EADOGS_REG_VAL *registerValue)
 
+  @Description
+    Fonction pour set le registre IS
 
-//void SetRE(s_EADOGS_REG_VAL *registerValue)
-//{
-//    registerValue->functionSet_RE0 |= BIT1;
-//}
-//void ResetRE(s_EADOGS_REG_VAL *registerValue)
-//{
-//    registerValue->functionSet_RE0 &= ~BIT1;
-//}
+  @Parameters
+    @param *registerValue pour la structure des registres.
+
+ */
 void SetIS(s_EADOGS_REG_VAL *registerValue)
 {
     registerValue->functionSet_RE0 |= BIT0;
 }
+/** 
+  @Function
+    void ResetIS(s_EADOGS_REG_VAL *registerValue)
+
+  @Description
+    Fonction pour reset le registre IS
+
+  @Parameters
+    @param *registerValue pour la structure des registres.
+
+ */
 void ResetIS(s_EADOGS_REG_VAL *registerValue)
 {
     registerValue->functionSet_RE0 &= ~BIT0;
 }
+/** 
+  @Function
+    void ConvertDataToSend(U_valData dataToConvert, s_EADOG_Data *convertedData)
 
+  @Description
+    Fonction pour inverser les bits du byte de donnée afin de les evoyer au LCD 
 
+  @Parameters
+    @param dataToConvert, bytes à convertir.
+  
+    @param *convertedData, structure pour la conversion
 
+ */
 void ConvertDataToSend(U_valData dataToConvert, s_EADOG_Data *convertedData)
 {
     // Inversion des bits MSB-LSB -> LSB-MSB
@@ -448,6 +558,32 @@ void ConvertDataToSend(U_valData dataToConvert, s_EADOG_Data *convertedData)
     // Décalage des bits pour avoir le bon format d'envoie sur le SPI
     convertedData->convertedData_Lsb = dataToConvert.data4bits.dataMsb << 4;
     convertedData->convertedData_Msb = dataToConvert.data4bits.dataLsb << 4;
+}
+/** 
+  @Function
+    void LCD_BlinkCursor(s_EADOGS_REG_VAL *registerValue, bool enable)
+
+  @Description
+    // Fonction pour activer le clignotement du curseur 
+
+  @Parameters
+    @param *registerValue pour la structure des registres.
+  
+    @param enable, true activé, false desactivé
+
+ */
+void LCD_BlinkCursor(s_EADOGS_REG_VAL *registerValue, bool enable)
+{
+    if(enable)
+    {
+        registerValue->displayControl |= BIT0;
+    }
+    else
+    {
+        registerValue->displayControl &= ~BIT0;
+    }
+    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
+    LCD_EADOGS_SendData(INSTRUCTION, registerValue->displayControl);
 }
 /* *****************************************************************************
  End of File

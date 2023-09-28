@@ -79,7 +79,8 @@ void DoDebounce (S_SwitchDescriptor *Descriptor, bool InputValue)
               if (Descriptor->DebounceCounter >= MaxDebounceCount)  {
                   // mise à jour du nouvel état
                   tmp.KeyValue = InputValue;
-                  if (tmp.KeyValue == 0) {
+                  // changement à 1 pour le projet
+                  if (tmp.KeyValue == 1) {
                      tmp.KeyPressed = 1;
                   } else {
                      tmp.KeyReleased = 1;

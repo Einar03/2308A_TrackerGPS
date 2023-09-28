@@ -60,6 +60,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "EA_DOGS164A.h"
 #include "Mc32_SPI_StateMachine.h"
 #include "minmea.h"
+#include "Mc32Delays.h"
 
 //#include "lcd_spi.h"
 //#include "Mc32Delays.h"
@@ -88,7 +89,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 */
 
 APP_DATA appData;
-
+static bool EnablePrint = false;
 //DRV_HANDLE lcdHandle;
 //DRV_HANDLE lcdBuffer;
 
@@ -184,17 +185,14 @@ void APP_Tasks ( void )
     //=====================================================
     // Variable pour la tension de la batterie
     static float V_Bat = 0;
-    // Flag pour activer la mesure de tension de la batterie
-//    static bool V_Bat_Mes = false;
-    static uint16_t V_Bat_Mes_Cnt = 0;
     
     //               Intervalle de sauvegarde
     //=====================================================
     // Consigne de l'intervalle en [s], valeur par défaut au min (30s)
     // valeur max 15 min = 900s
-    uint16_t timeSpan = 30;
+    static uint16_t timeSpan = 30;
     // Compteur de temps pour l'intervalle en [s]
-    uint16_t timeSpanCnt = 0;
+    static uint16_t timeSpanCnt = 1;
     // Variable pour la position du digit à modifier de l'intervalle dans le mode config
     // Ex pour interevalle de  12:34
     // 0 => 4
@@ -222,12 +220,15 @@ void APP_Tasks ( void )
     //                         LCD
     //=====================================================
     // structure pour sauvegarder la valeur des régistres utilisé pour l'écran LCD
-    s_EADOGS_REG_VAL RegVal;
+    static s_EADOGS_REG_VAL RegVal;
     RegVal.displayControl = DISPLAY_CONTROL;
     RegVal.extendedFunctionSet = EXTENDED_FUNCTION_SET;
     RegVal.functionSet_RE0 = FUNCTIONSET_RE0;
     RegVal.functionSet_RE1 = FUNCTIONSET_RE1;
     RegVal.power_Display_Contrast = POWER_DISPLAY_CONTRAST;
+    
+    static uint8_t Menu = 0;
+    static uint8_t backLightLvl = 10;
     
     //               Flags
     //=====================================================
@@ -236,7 +237,7 @@ void APP_Tasks ( void )
     // Point d'arrivé
     static bool endPointSet = false;
     bool SDCardmounted = false;
-    
+    bool waitForCmd = false; 
     //               USB
     //=====================================================
     // Connexion à l'application du PC
@@ -253,13 +254,18 @@ void APP_Tasks ( void )
     static S_SwitchDescriptor DescriptBtnMode;
     static S_SwitchDescriptor DescriptBtnGPS;
     static S_SwitchDescriptor DescriptBtnStartStop;
-    // Compteurs pour le nombre d'appuis sur chaque bouton
-//    static uint8_t btnModeTime = 0;
-//    static uint8_t btnGPSTime = 0;
-//    static uint8_t btnStartStopTime = 0;
-//    static uint8_t btnModeCnt = 0;
-//    static uint8_t btnGPSCnt = 0;
-//    static uint8_t btnStartStopCnt = 0;
+    
+    //    GNSS
+    //=====================================================
+    static minmea_messages Messages;
+//    static char line[MINMEA_MAX_SENTENCE_LENGTH] = {0,0,0,0,0,0,0,0,0,0,
+//    0,0,0,0,0,0,0,0,0,0,
+//    0,0,0,0,0,0,0,0,0,0,
+//    0,0,0,0,0,0,0,0,0,0,
+//    0,0,0,0,0,0,0,0,0,0,
+//    0,0,0,0,0,0,0,0,0,0,
+//    0,0,0,0,0,0,0,0,0,0,
+//    0,0,0,0,0,0,0,0,0,0};
     
     // Compteur pour le clignotement des LEDs
     static uint8_t blinkCnt = 0;
@@ -277,11 +283,13 @@ void APP_Tasks ( void )
             DRV_TMR0_Start();  // Pour le programme principale
             DRV_TMR1_Start();  // Pour les modules OCs
             // Démarrage des OCs
+            DRV_OC0_PulseWidthSet(4999); // pour 100%
             DRV_OC0_Start();   // Pour le backlight de l'écran LCD
 //            DRV_OC1_Start();   // Pour le Buzzer 
             // Initialisation du ADC
             InitADC10();
-            
+            ReadAllAnalogValues();
+            ReadBattery(&V_Bat);
 //            V_Bat = ReadAllAnalogValues();
             // Initialisation des FIFOS pour les données reçus par le récepteur GPS
             // et les données à envoyer au PC
@@ -291,7 +299,8 @@ void APP_Tasks ( void )
             // Initialisation de l'écran LCD
             if(SPI_GetState() == SPI_STATE_IDLE)
             {
-                LCD_EADOGS_Init(&RegVal, BUS_8BITS, 4, BOTTOM_VIEW, false, false);
+                LCD_EADOGS_Init(&RegVal, BUS_8BITS, 4, BOTTOM_VIEW, false, true);
+                LCD_BlinkCursor(&RegVal, true);
             }
            
             
@@ -315,83 +324,32 @@ void APP_Tasks ( void )
         case APP_STATE_SERVICE_TASKS:
         {
             //=========================
-            // Execution du antirebonds
+            // Gestion du nombre d'appuis sur les boutons ave
+            // l'antirebonds
             //=========================
-           
             // Bouton mode config
             ScanButtons(&DescriptBtnMode, BtnModeStateGet());
             // Bouton GPS
             ScanButtons(&DescriptBtnGPS, BtnGPSStateGet());
             // Bouton Start / Stop
-            ScanButtons(&DescriptBtnStartStop, BtnStartStopStateGet());
-            
-//            //=================================================
-//            // Gestion du nombre d'appuis sur les boutons
-//            //=================================================
-//            btnModeTime = (btnModeTime+1) % TIMEBTN;
-//            btnGPSTime = (btnGPSTime+1) % TIMEBTN;
-//            btnStartStopTime = (btnStartStopTime+1) % TIMEBTN;
-//            blinkCnt = (blinkCnt + 1) %  BLINK_PER;
-//                    
-//            // Si appui sur le bouton Mode config
-//            //=================================================
-//            if(DebounceIsPressed(&DescriptBtnMode))
-//            {             
-//                // Reset compteur de timeout
-//                btnModeTime = 0;
-//                
-//                if(btnModeCnt < NB_PRESS_BTN_MAX)
-//                {
-//                    btnModeCnt++;
-//                }
-//                // 
-//                DebounceClearPressed(&DescriptBtnMode);
-//            }
-//            // Si appui sur le bouton GPS
-//            //=================================================
-//            if(DebounceIsPressed(&DescriptBtnGPS))
-//            {             
-//                // Reset compteur de timeout
-//                btnGPSTime = 0;
-//                if(btnGPSCnt < NB_PRESS_BTN_MAX)
-//                {
-//                    btnGPSCnt++;
-//                }
-//                //
-//                DebounceClearPressed(&DescriptBtnGPS);
-//            }
-//            // Si appui sur le bouton Start Stop
-//            //=================================================
-//            if(DebounceIsPressed(&DescriptBtnStartStop))
-//            {             
-//                // Reset compteur de timeout
-//                btnStartStopTime = 0;
-//                if(btnStartStopCnt < NB_PRESS_BTN_MAX)
-//                {
-//                    btnStartStopCnt++;
-//                }
-//                DebounceClearPressed(&DescriptBtnStartStop);
+            ScanButtons(&DescriptBtnStartStop, BtnStartStopStateGet()); 
+                
+            // Compteur pour le clognotement des LEDs
+            blinkCnt = (blinkCnt + 1) %  BLINK_PER;
+
+            //========================================================
+            // Mesure du niveau de la batterie tous les 3s
+            //========================================================
+            ReadBattery(&V_Bat);
+            // Affichage dans le LCD du niveau de batterie
+//            if((SPI_GetState() == SPI_STATE_IDLE) && (EnablePrint == true))
+//            {
+//                LCD_EADOGS_GoTo(&RegVal, 1, 1);
+//                LCD_Printf("Niveau Batterie     %1.2f",V_Bat);
+//                EnablePrint = false;
 //            }
             //========================================================
-            // Mesure du niveau de la batterie tous les 20 ms
-            //========================================================
-            V_Bat_Mes_Cnt = (V_Bat_Mes_Cnt + 1) % 200;
-            if(V_Bat_Mes_Cnt == 0)
-            {
-                EN_ReadBATOn();
-            }
-            else if(V_Bat_Mes_Cnt == 100)
-            {
-                V_Bat = ReadAllAnalogValues();
-                EN_ReadBATOff();
-                if(SPI_GetState() == SPI_STATE_IDLE)
-                {
-                    LCD_EADOGS_GoTo(&RegVal, 1, 1);
-                    LCD_Printf("Niveau Batterie     %1.2f",V_Bat);
-                }
-            }
-            //========================================================
-            // Affichage du niveau de batterie
+            // Affichage sur la LEDs du niveau de batterie
             //========================================================
             // Pendant la charge
             if((V_Bat <= BAT_CHARGING) && (V_Bat > BAT_100))
@@ -435,7 +393,7 @@ void APP_Tasks ( void )
                 {
                     BatLvl_ROn();
                 }
-                else if(blinkCnt == BLINK_PER)
+                else if(blinkCnt == (BLINK_PER-1))
                 {
                     BatLvl_ROff();
                 }
@@ -471,21 +429,18 @@ void APP_Tasks ( void )
                     
                     if(Cnt == 1)
                     {
-//                        if(SPI_GetState() == SPI_STATE_IDLE)
-//                        {
-//                            LCD_EADOGS_GoTo(&RegVal, 1,3);
-//                            LCD_Printf("2308A TrackerGPS");
-//                            LCD_Printf("Einar Farinas");
-//                        }
+                        if(SPI_GetState() == SPI_STATE_IDLE)
+                        {
+                            LCD_EADOGS_GoTo(&RegVal, 1,1);
+                            LCD_Printf("2308 TrackerGPS");
+                            LCD_EADOGS_GoTo(&RegVal, 1,2);
+                            LCD_Printf("Einar Farinas");
+                        }
                     }
-//                    else if(Cnt == 10)
-//                    {
-//                        LCD_EADOGS_GoHome(&RegVal);
-//                    }
-                    
                     if(Cnt == 250)
                     {
 //                        LCD_EADOGS_GoHome(&RegVal);
+                        EnablePrint = true;
                         appData.tracker_State = IDLE;
                     }
                     Cnt++;
@@ -494,16 +449,19 @@ void APP_Tasks ( void )
                 //                      Idle
                 //=====================================================
                 case IDLE:
-//                    if(SPI_GetState() == SPI_STATE_IDLE)
-//                    {
-//                        LCD_EADOGS_GoTo(&RegVal, 1, 4);
-//                        LCD_Printf("IDLE");
-//                    }
+                    if((SPI_GetState() == SPI_STATE_IDLE) && (EnablePrint == true))
+                    {
+                        LCD_EADOGS_Clear();
+                        LCD_EADOGS_GoTo(&RegVal, 1, 2);
+                        LCD_Printf("      IDLE     ");
+                        EnablePrint = false;
+                    }
                     // Si appui 1 fois sur le bouton GPS
                     if(DescriptBtnGPS.nbTouch == 1)
                     {
 //                        DescriptBtnGPS.nbTouch = 0;
                         // Passer dans l'état d'attente de connexion aux satellites
+                        EnablePrint = true;
                         appData.tracker_State = WAIT_FOR_CONNECTION;
                     }
                     if(GetUsbMessage(USB_RxBuffer, 9))
@@ -515,7 +473,12 @@ void APP_Tasks ( void )
                             appData.tracker_State = USB_IDLE;
                         }
                     }
-                    
+                    if(DescriptBtnMode.HoldCnt >= 300)
+                    {
+                        // Passer dans l'état de configuration
+                        EnablePrint = true;
+                        appData.tracker_State = CONFIG;
+                    } 
                     // Affichage état idle
                     
 //                    if(SPI_GetState() == SPI_STATE_IDLE)
@@ -530,24 +493,45 @@ void APP_Tasks ( void )
 //                    Cnt = (Cnt + 1) % 10;
 //                    if(true)
 //                    {
-                    if((GetSDCardWriteFlag() == false) && (SDCardmounted == true))
-                    {
-
-                        dataSize = GetGnssCmd(GnssData);
-                        if(dataSize != 0)
-                        {
-//                                SendUsbMessage(GnssData, dataSize);
-                            SetBuffer(GnssData, dataSize);
-                            SetSDCardWriteFlag();
-                        }
-//                            dataSize = ScanGnssCmd(MINMEA_SENTENCE_GLL, GnssData);
-//                            if(dataSize != 0)
-//                            {
-//                                SetBuffer(GnssData, dataSize);
-//                                SetSDCardWriteFlag();
-//                            }
-                        ResetBuffer(GnssData);
-                    }
+                    
+                    
+                    
+//                    Cnt = (Cnt + 1) % 100;
+//                    if(Cnt == 0)
+//                    {
+//                        timeSpanCnt = (timeSpanCnt + 1) % timeSpan;
+//                        if(timeSpanCnt == 0)
+//                        {
+//                            waitForCmd = true;
+//                        }
+//                    }
+//                    
+////                    dataSize = GetGnssCmd(GnssData);
+//                    
+//                    if((((GetSDCardWriteFlag() == false) && (SDCardmounted == true)) ))// || (waitForCmd == true)))
+//                    {
+//                        dataSize = GetGnssCmd(GnssData);
+//                        if(dataSize != 0)
+//                        {
+////                                SendUsbMessage(GnssData, dataSize);
+//                            SetBuffer(GnssData, dataSize);
+//                            SetSDCardWriteFlag();
+//                        }
+////                            dataSize = ScanGnssCmd(MINMEA_SENTENCE_GLL, GnssData);
+////                        if(dataSize != 0)
+////                        {
+////                            if((minmea_sentence_id((char*)GnssData, true)) == MINMEA_SENTENCE_RMC)
+////                            {
+////                                SetBuffer(GnssData, dataSize);
+////                                SetSDCardWriteFlag();
+////                                waitForCmd = false;
+////                            }
+////                        } 
+//                    }
+//                    ResetBuffer(GnssData);
+                    
+                    
+                    
 //                    }
 //                    if(GetSDCardWriteFlag() == false)
 //                    {
@@ -567,16 +551,84 @@ void APP_Tasks ( void )
                 //          Attente de connection aux satellites
                 //=====================================================
                 case WAIT_FOR_CONNECTION:
+                    if((SPI_GetState() == SPI_STATE_IDLE) && (EnablePrint == true))
+                    {
+                        LCD_EADOGS_Clear();
+                        LCD_EADOGS_GoTo(&RegVal,1,1);
+                        LCD_Printf("Connecting...");
+                        LCD_EADOGS_GoTo(&RegVal,1,2);
+                        LCD_Printf("Sat=%2d", Messages.gsv.total_sats);
+                        LCD_EADOGS_GoTo(&RegVal,1,3);
+                        LCD_Printf("CNO=%2d", Messages.gsv.sats[0].snr);
+//                        LCD_EADOGS_GoTo(&RegVal,1,3);
+//                        LCD_Printf("N°36...");
+//                        LCD_EADOGS_GoTo(&RegVal,1,4);
+//                        LCD_Printf("E°06...");
+                        EnablePrint = false;
+                    }
                     // Attendre la réecpetion d'une cordonnée
-                    
-//                    LCD_Printf("GPS");
                     // clignotement LED GPS
+                    if(blinkCnt == (BLINK_PER / 2))
+                    {
+                        GPS_GOn();
+                    }
+                    else if(blinkCnt == (BLINK_PER -1))
+                    {
+                        GPS_GOff();
+                    }
+//                    dataSize = ScanGnssCmd(MINMEA_SENTENCE_GSV, GnssData);
+                    dataSize = GetGnssCmd(GnssData);
+                    if(dataSize != 0)
+                    {
+                        if((minmea_sentence_id((char*)GnssData, true)) == MINMEA_SENTENCE_GSV)
+                        {
+                            minmea_parse_gsv(&Messages.gsv, (char*)GnssData);
+                        }
+                        else if((minmea_sentence_id((char*)GnssData, true)) == MINMEA_SENTENCE_RMC)
+                        {
+                            minmea_parse_rmc(&Messages.rmc, (char*)GnssData);
+                            if((Messages.rmc.latitude.value != 0) && (Messages.rmc.longitude.value != 0))
+                            {
+                                EnablePrint = true;
+                                appData.tracker_State = READY;
+                                GPS_GOn();
+                            }
+                        }
+                        
+                        Cnt = (Cnt + 1) % 50;
+                        if(Cnt == 0)
+                        {
+                            EnablePrint = true;
+                        }
+//                        SetBuffer(GnssData, dataSize);
+                    }
+                    ResetBuffer(GnssData);
+//                    dataSize = ScanGnssCmd(MINMEA_SENTENCE_GSV, GnssData);
+//                    if(dataSize != 0)
+//                    {
+////                        SendUsbMessage(GnssData, dataSize);
+//                        minmea_parse_gsv(&Messages.gsv, GnssData);
+////                        if(Messages.gsv.total_sats < 0)
+////                        {
+////                            Messages.gsv.total_sats = 0;
+////                        }
+////                        if(Messages.gsv.sats[0].snr < 0)
+////                        {
+////                            Messages.gsv.sats[0].snr = 0;
+////                        }
+//                        if(Cnt == 0)
+//                        {
+//                            EnablePrint = true;
+//                        }
+////                        SetBuffer(GnssData, dataSize);
+//                    }
                     
                     if(DescriptBtnGPS.nbTouch == 2)
                     {
-//                        DescriptBtnGPS.nbTouch = 0;
+                        DescriptBtnGPS.nbTouch = 0;
                         // Passer dans l'état d'attente de connexion aux satellites
                         appData.tracker_State = READY;
+                        EnablePrint = true;
                     }
                     break;
                 //=====================================================
@@ -584,13 +636,20 @@ void APP_Tasks ( void )
                 // système prêt à acquerir et sauvegarder des coordonnées
                 //=====================================================
                 case READY:
-//                    LCD_Printf("READY");
+                    if((SPI_GetState() == SPI_STATE_IDLE) && (EnablePrint == true))
+                    {
+                        LCD_EADOGS_Clear();
+                        LCD_EADOGS_GoTo(&RegVal, 3, 2);
+                        LCD_Printf("READY");
+                        EnablePrint = false;
+                    }
                     // Si appui 1 fois sur le bouton GPS et le point de départ n'a pas été sauvegardé
                     if((DescriptBtnGPS.nbTouch == 1) && (startPointSet == false))
                     {
                         // Retour à l'état idle
                         appData.tracker_State = IDLE;
-//                        DescriptBtnGPS.nbTouch = 0;
+                        DescriptBtnGPS.nbTouch = 0;
+                        EnablePrint = true;
 //                        break;
                     }
                     // Si appui 1 fois sur le bouton GPS et et point de départ a été sauvegardé
@@ -610,22 +669,57 @@ void APP_Tasks ( void )
                         startPointSet = true;
                         DescriptBtnStartStop.nbTouch = 0;
                         // Savegarde la coordonnée de départ 
-                        appData.tracker_State = SAVE_COORDINATES;
+//                        appData.tracker_State = SAVE_COORDINATES;
                     }
                     break;
                 //=====================================================
                 // Acquisition et savegarde de coordonnées selon l'intervalle de temps
                 //===================================================== 
                 case RUN:
-//                    LCD_Printf("RUN");
-                    // Si temps d'intervalle écoulé
-                    if(timeSpanCnt == timeSpan)
+                    if((SPI_GetState() == SPI_STATE_IDLE) && (EnablePrint == true))
                     {
-                        // Reset compteur
-                        timeSpanCnt = 0;
-                        // Savegarde la coordonnée de départ 
-                        appData.tracker_State = SAVE_COORDINATES;
+                        LCD_EADOGS_Clear();
+                        LCD_EADOGS_GoTo(&RegVal, 1, 1);
+                        LCD_Printf("Tracking");
+                        LCD_EADOGS_GoTo(&RegVal, 1, 2);
+                        LCD_Printf("%2d:%2d %2d/%2d/%4d", Messages.rmc.time.hours, Messages.rmc.time.minutes, Messages.rmc.date.day, Messages.rmc.date.month, Messages.rmc.date.year);
+                        LCD_EADOGS_GoTo(&RegVal, 1, 3);
+                        LCD_Printf("%d", Messages.rmc.longitude.scale);
+                        LCD_EADOGS_GoTo(&RegVal, 1, 4);
+                        LCD_Printf("%d", Messages.rmc.longitude.value);
+                        EnablePrint = false;
                     }
+                    Cnt = (Cnt + 1) % 100;
+                    if(Cnt == 0)
+                    {
+                        timeSpanCnt = (timeSpanCnt + 1) % timeSpan;
+                    }
+                    // Si temps d'intervalle écoulé
+                    if(timeSpanCnt == (timeSpan - 1))
+                    {
+                        dataSize = GetGnssCmd(GnssData);
+                        if(dataSize != 0)
+                        {
+                            if((minmea_sentence_id((char*)GnssData, true)) == MINMEA_SENTENCE_GSV)
+                            {
+                                minmea_parse_gsv(&Messages.gsv, (char*)GnssData);
+                            }
+                            else if((minmea_sentence_id((char*)GnssData, true)) == MINMEA_SENTENCE_RMC)
+                            {
+                                minmea_parse_rmc(&Messages.rmc, (char*)GnssData);
+                            }
+                            if(Messages.rmc.valid == true)
+                            {
+                                EnablePrint = true;
+                            }
+    //                        SetBuffer(GnssData, dataSize);
+                        }
+                        // Reset compteur
+//                        timeSpanCnt = 0;
+                        // Savegarde la coordonnée de départ 
+//                        appData.tracker_State = SAVE_COORDINATES;
+                    }
+                    ResetBuffer(GnssData);
                     // Si appui une première fois sur le bouton start/stop
                     // Set flag pour indiquer le point d'arrivé
                     if((DescriptBtnStartStop.nbTouch == 1)  && (endPointSet == false))
@@ -735,72 +829,224 @@ void APP_Tasks ( void )
                 // Mode configuration 
                 // Pour régler l'intervalle de temps ou autres paramètres
                 case CONFIG:
-//                    LCD_Printf("CONFIG");
-                     // Selection du digit
-                    //======================
-                    if(DescriptBtnMode.nbTouch == 1)
-                    {
-                        // Deplacement du curseur au digit suivante
-//                        DescriptBtnMode.nbTouch = 0;
-                    }
-                    else if(DescriptBtnMode.nbTouch != 0)
-                    {
-//                        DescriptBtnMode.nbTouch = 0;
-                    }
-                    switch(timeSpanDigit)
-                    {
-                        // Secondes unitées
-                        case 0:
-                            timeSpanIncrDecrValue = 1;
-                            break;
-                        // Secondes dixièmes
-                        case 1:
-                            timeSpanIncrDecrValue = 10;
-                            break;
-                        // Minutes unitées
-                        case 2:
-                            timeSpanIncrDecrValue = 60;
-                            break;
-                        // Minutes dixièmes
-                        case 3:
-                            timeSpanIncrDecrValue = 600;
-                            break;
-                        default:
-                            break;
-                    }
-                    // Set les valeurs min et max pour pouvoir
-                    // incrémeter ou décrémenter la valeur
-                    timeSpanMinVal = timeSpanIncrDecrValue;
-                    timeSpanMaxVal = (TIME_SPAN_MAX - timeSpanIncrDecrValue);
                     
-                    // Incrémentation de la valeur du digit
-                    // avec le bouton StartStop
-                    if(DescriptBtnStartStop.nbTouch == 1)
+                    switch(Menu)
                     {
-                        if(timeSpan <= timeSpanMaxVal)
-                        {
-                            timeSpan += timeSpanIncrDecrValue;
-                        }
-                        DescriptBtnStartStop.nbTouch = 0;
+                        case 0:
+                            if((SPI_GetState() == SPI_STATE_IDLE) && (EnablePrint == true))
+                            {
+                                LCD_EADOGS_Clear();
+                                LCD_EADOGS_GoTo(&RegVal,2,1);
+                                LCD_Printf("Mode config");
+                                LCD_EADOGS_GoTo(&RegVal,3,2);
+                                LCD_Printf(">Intervalle<");
+                                LCD_EADOGS_GoTo(&RegVal,4,3);
+                                LCD_Printf("Backlight");
+                                EnablePrint = false;
+                            }
+                            if(DescriptBtnMode.nbTouch == 1)
+                            {
+                                Menu = 2;
+                                EnablePrint = true;
+                                DescriptBtnMode.nbTouch = 0;
+                            }
+                            if(DescriptBtnStartStop.nbTouch == 1)
+                            {
+                                Menu = 1;
+                                EnablePrint = true;
+                                DescriptBtnStartStop.nbTouch = 0;
+                            }
+                            if(DescriptBtnGPS.nbTouch == 1)
+                            {
+                                Menu = 1;
+                                EnablePrint = true;
+                                DescriptBtnGPS.nbTouch = 0;
+                            }
+                            if(DescriptBtnMode.HoldCnt == 300)
+                            {
+                                EnablePrint = true;
+                                DescriptBtnMode.HoldCnt = 0;
+                                appData.tracker_State = IDLE;
+                            }
+                            break;
+                        case 1:
+                            if((SPI_GetState() == SPI_STATE_IDLE) && (EnablePrint == true))
+                            {
+                                LCD_EADOGS_Clear();
+                                LCD_EADOGS_GoTo(&RegVal,2,1);
+                                LCD_Printf("Mode config");
+                                LCD_EADOGS_GoTo(&RegVal,4,2);
+                                LCD_Printf(">Backlight<");
+                                LCD_EADOGS_GoTo(&RegVal,3,3);
+                                LCD_Printf("Intervalle");
+                                EnablePrint = false;
+                            }
+                            if(DescriptBtnMode.nbTouch == 1)
+                            {
+                                Menu = 3;
+                                EnablePrint = true;
+                                DescriptBtnMode.nbTouch = 0;
+                            }
+                            if(DescriptBtnStartStop.nbTouch == 1)
+                            {
+                                Menu = 0;
+                                EnablePrint = true;
+                                DescriptBtnStartStop.nbTouch = 0;
+                            }
+                            if(DescriptBtnGPS.nbTouch == 1)
+                            {
+                                Menu = 0;
+                                EnablePrint = true;
+                                DescriptBtnGPS.nbTouch = 0;
+                            }
+                            if(DescriptBtnMode.HoldCnt == 300)
+                            {
+                                EnablePrint = true;
+                                DescriptBtnMode.HoldCnt = 0;
+                                appData.tracker_State = IDLE;
+                            }
+                            break;
+                        case 2:
+                            if((SPI_GetState() == SPI_STATE_IDLE) && (EnablePrint == true))
+                            {
+                                LCD_EADOGS_Clear();
+                                LCD_EADOGS_GoTo(&RegVal,1,2);
+                                LCD_Printf("Mode config");
+                                LCD_EADOGS_GoTo(&RegVal,1,3);
+                                LCD_Printf("Intervalle : ");
+                                LCD_EADOGS_GoTo(&RegVal,1,4);
+                                LCD_Printf("%d : %d", timeSpan/60, timeSpan );
+                                EnablePrint = false;
+                            }
+                            // Selection du digit
+                            //======================
+                            if(DescriptBtnMode.nbTouch == 1)
+                            {
+                                // Deplacement du curseur au digit suivante
+        //                        DescriptBtnMode.nbTouch = 0;
+                            }
+                            else if(DescriptBtnMode.nbTouch != 0)
+                            {
+        //                        DescriptBtnMode.nbTouch = 0;
+                            }
+                            switch(timeSpanDigit)
+                            {
+                                // Secondes unitées
+                                case 0:
+                                    timeSpanIncrDecrValue = 1;
+                                    break;
+                                // Secondes dixièmes
+                                case 1:
+                                    timeSpanIncrDecrValue = 10;
+                                    break;
+                                // Minutes unitées
+                                case 2:
+                                    timeSpanIncrDecrValue = 60;
+                                    break;
+                                // Minutes dixièmes
+                                case 3:
+                                    timeSpanIncrDecrValue = 600;
+                                    break;
+                                default:
+                                    break;
+                            }
+                            // Set les valeurs min et max pour pouvoir
+                            // incrémeter ou décrémenter la valeur
+                            timeSpanMinVal = (TIME_SPAN_MIN + timeSpanIncrDecrValue);
+                            timeSpanMaxVal = (TIME_SPAN_MAX - timeSpanIncrDecrValue);
+
+                            // Incrémentation de la valeur du digit
+                            // avec le bouton StartStop
+                            if(DescriptBtnStartStop.nbTouch == 1)
+                            {
+                                if(timeSpan <= timeSpanMaxVal)
+                                {
+                                    timeSpan += timeSpanIncrDecrValue;
+                                    EnablePrint = true;
+                                }
+                                DescriptBtnStartStop.nbTouch = 0;
+                            }
+                            else if(DescriptBtnStartStop.nbTouch != 0)
+                            {
+                                DescriptBtnStartStop.nbTouch = 0;
+                            }
+                            // Décrémentation de la valeur du digit
+                            // avec le boutons GPS
+                            if(DescriptBtnGPS.nbTouch == 1)
+                            {
+                                if(timeSpan >= timeSpanMinVal)
+                                {
+                                    timeSpan -= timeSpanIncrDecrValue;
+                                    EnablePrint = true;
+                                }
+        //                        DescriptBtnGPS.nbTouch = 0;
+                            }
+                            else if(DescriptBtnGPS.nbTouch != 0)
+                            {
+        //                        DescriptBtnGPS.nbTouch = 0;
+                            }
+                            if(DescriptBtnMode.nbTouchCnt == 2)
+                            {
+                                EnablePrint = true;
+                                Menu = 0;
+                                DescriptBtnMode.nbTouchCnt = 0;
+                            }
+                            break;
+                        case 3:
+                            if((SPI_GetState() == SPI_STATE_IDLE) && (EnablePrint == true))
+                            {
+                                LCD_EADOGS_Clear();
+                                LCD_EADOGS_GoTo(&RegVal,1,2);
+                                LCD_Printf("Mode config");
+                                DRV_OC0_PulseWidthSet(BL_100 * backLightLvl / 100);
+                                LCD_EADOGS_GoTo(&RegVal,1,3);
+                                LCD_Printf("Backlight : %d %%", backLightLvl);
+                                EnablePrint = false;
+                            }
+                            if(DescriptBtnStartStop.nbTouch == 1)
+                            {
+                                if(backLightLvl < 100)
+                                {
+                                    backLightLvl++;
+                                    EnablePrint = true;
+                                    DescriptBtnStartStop.nbTouch = 0;
+                                }
+                            }
+                            else if(DescriptBtnStartStop.HoldCnt >= 100)
+                            {
+                                if(backLightLvl < 100)
+                                {
+                                    backLightLvl++;
+                                    EnablePrint = true;
+                                }
+                            }
+                            if(DescriptBtnGPS.nbTouch == 1)
+                            {
+                                if(backLightLvl > 0)
+                                {
+                                    backLightLvl--;
+                                    EnablePrint = true;
+                                    DescriptBtnGPS.nbTouch = 0;
+                                }
+                            }
+                            else if(DescriptBtnGPS.HoldCnt >= 100)
+                            {
+                                if(backLightLvl > 0)
+                                {
+                                    backLightLvl--;
+                                    EnablePrint = true;
+                                }
+                            }
+                            if(DescriptBtnMode.nbTouchCnt == 2)
+                            {
+                                EnablePrint = true;
+                                Menu = 0;
+                                DescriptBtnMode.nbTouchCnt = 0;
+                            }
+                            break;
+                            
                     }
-                    else if(DescriptBtnStartStop.nbTouch != 0)
-                    {
-                        DescriptBtnStartStop.nbTouch = 0;
-                    }
-                    // Décrémentation de la valeur du digit
-                    // avec le boutons GPS
-                    if(DescriptBtnGPS.nbTouch == 1)
-                    {
-                        if(timeSpan >= timeSpanMinVal)
-                        {
-                            timeSpan -= timeSpanIncrDecrValue;
-                        }
-//                        DescriptBtnGPS.nbTouch = 0;
-                    }
-                    else if(DescriptBtnGPS.nbTouch != 0)
-                    {
-//                        DescriptBtnGPS.nbTouch = 0;
-                    }
+                    
                     break;
                 //=====================================================
                 // Pour sauvegarder la configuration choisie
@@ -821,7 +1067,7 @@ void APP_Tasks ( void )
 //            
 //            
 //            
-//            Cnt = (Cnt + 1) % 50;
+            
 //            if(Cnt == 0)
 //            {
 //                SendUsbMessage(GnssData, 70);
@@ -855,6 +1101,7 @@ void APP_UpdateState(APP_STATES newState)
     appData.state = newState; // mise à jour d'état
 }
 
+// Utiliser pour test
 void Timer1_CallBack(void)
 {
     // Compteur pour pour le changment de LEDS
@@ -943,7 +1190,7 @@ void ScanButtons(S_SwitchDescriptor *DescriptButton, bool ButtonState)
 
     // Si appui sur le bouton Mode config
     //=================================================
-    if(DebounceIsPressed(DescriptButton))
+    if((DebounceIsReleased(DescriptButton)) && (DebounceIsPressed(DescriptButton)) && (DescriptButton->HoldCnt != 0))
     {             
         // Reset compteur de timeout
         DescriptButton->TimeoutCnt = 0;
@@ -954,13 +1201,46 @@ void ScanButtons(S_SwitchDescriptor *DescriptButton, bool ButtonState)
         }
         // 
         DebounceClearPressed(DescriptButton);
+        DebounceClearReleased(DescriptButton);
     }
-    
+    if(DebounceGetInput(DescriptButton) == 1)
+    {
+        DescriptButton->HoldCnt++;
+        if(DescriptButton->HoldCnt >= 50)
+        {
+            DescriptButton->nbTouchCnt = 0;
+        }
+    }
+    else
+    {
+        DescriptButton->HoldCnt = 0;
+    }
+    // Si timeout
     if(DescriptButton->TimeoutCnt == (TIMEBTN - 1))
     {
+        // Enregistrer le nombre d'appuis
         DescriptButton->nbTouch = DescriptButton->nbTouchCnt;
+        // Reset le compteur de nombre d'appuis
         DescriptButton->nbTouchCnt = 0;
     }
+}
+
+void ReadBattery(float *VBat)
+{
+    // Flag pour activer la mesure de tension de la batterie
+    static uint16_t V_Bat_Mes_Cnt = 0;
+    
+    if(V_Bat_Mes_Cnt == 0)
+    {
+        EN_ReadBATOn();
+    }
+    if(V_Bat_Mes_Cnt == 1)
+    {
+        *VBat = ReadAllAnalogValues();
+//        EnablePrint = true;
+        EN_ReadBATOff();
+    }
+    V_Bat_Mes_Cnt = (V_Bat_Mes_Cnt + 1) % BAT_TIME;
 }
 /*******************************************************************************
  End of File

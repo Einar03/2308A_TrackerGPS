@@ -78,11 +78,13 @@ extern "C" {
 #define NB_ACTIONS        9
     
 // Boutons
-#define TIMEBTN          60
+#define TIMEBTN          30
 #define NB_PRESS_BTN_MAX  2
+#define BL_100         4999
 // Intervalle d'enregistrement
-#define TIME_SPAN_MAX   900 // pour 15 min (900) 
-#define BLINK_PER        10 // Pour 10 Hz (10 == 100 ms)
+#define TIME_SPAN_MAX   900 // pour 15 min (900)
+#define TIME_SPAN_MIN    30 // pour 15 min (900) 
+#define BLINK_PER        30 // Pour 10 Hz (10 == 100 ms)
 // Niveau de batterie
 #define BAT_CHARGING    4.20
 #define BAT_100         3.70
@@ -90,7 +92,7 @@ extern "C" {
 #define BAT_50          3.35
 #define BAT_30          3.21
 #define BAT_10          3.07
-    
+#define BAT_TIME        300
 #define USB_TIME_OUT     200
     
 // *****************************************************************************
@@ -241,6 +243,7 @@ void Timer1_CallBack(void);
 void ResetBuffer(uint8_t *Buffer);
 APP_STATES AppGetState(void);
 void ScanButtons(S_SwitchDescriptor *DescriptButton, bool ButtonState);
+void ReadBattery(float *VBat);
 
 #endif /* _APP_H */
 

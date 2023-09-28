@@ -54,8 +54,9 @@ typedef struct {
            uint8_t nbTouchCnt;
            // Pour sauvegarde du nombre d'appuis
            uint8_t nbTouch;
-           // Compmteur de temps pour valider le nombre d'appuis
+           // Compteur de temps pour valider le nombre d'appuis
            uint8_t TimeoutCnt;   
+           uint16_t HoldCnt;
            //=========================================================
            s_bits bits;
 } S_SwitchDescriptor;

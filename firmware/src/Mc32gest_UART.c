@@ -64,6 +64,7 @@ int8_t USBfifoTX[FIFO_TX_SIZE];
 // Declaration du descripteur du FIFO d'émission
 S_fifo descrUSBFifoTX;
 
+
 // Initialisation de la communication sérielle
 void InitFifoComm(void)
 {    
@@ -80,6 +81,7 @@ void InitFifoComm(void)
     InitFifo ( &descrUSBFifoTX, FIFO_TX_SIZE, USBfifoTX, 0 );
 } // InitComm
 
+// Fonction pour récupérer un certain nombre de bytes dans le FIFO du UART1
 void GetGnssMessage(uint8_t *pData, uint8_t nbBytesToGet)
 {
     uint8_t i = 0;
@@ -101,17 +103,23 @@ void GetGnssMessage(uint8_t *pData, uint8_t nbBytesToGet)
 //    }
 } // GetMessage
 
+// Focntion pour récupérer un commande (de taille variable) dans  le FIFO du UART1
 uint8_t GetGnssCmd(uint8_t *pData)
 {
-    uint16_t NbCharInFifo = 0;
+    uint16_t NbCharInFifo = 0; // Variable 
     uint8_t start = 0;
     uint8_t nBData = 0;
     uint8_t endData_1 = 0;
     NbCharInFifo = GetReadSize(&descrGNSSFifoRX);
     
+    // Si au moins 20 caractères sont disponibles
     if(NbCharInFifo >= 20)
     {
+        // Récupérer le premier caractère
         GetCharFromFifo(&descrGNSSFifoRX, &start);
+        // Si c'est le début d'une commande ($)
+        // Récupérer le reste caractères jusqu'à la fin 
+        // de la commande (0x0D et 0x0A)
         if(start == '$')
         {
             *pData = '$';
@@ -126,7 +134,7 @@ uint8_t GetGnssCmd(uint8_t *pData)
                     GetCharFromFifo(&descrGNSSFifoRX, pData);
                 }
             }while(!((endData_1 == 0x0D) && (*pData == 0x0A)));
-//            return nBData;
+            // incrémenter d'un
             nBData++;
             return nBData;
         }
@@ -167,6 +175,7 @@ uint8_t ScanGnssCmd(enum minmea_sentence_id sentenceMsg, uint8_t *pData)
 //                case MINMEA_SENTENCE_GST :
 //                    break;
 //                case MINMEA_SENTENCE_GSV :
+//                    minmea_parse_gsv()
 //                    break;
 //                case MINMEA_SENTENCE_RMC :
 //                    minmea_parse_rmc(frame, pData);
