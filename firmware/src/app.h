@@ -124,7 +124,7 @@ typedef enum
 	IDLE,
 	WAIT_FOR_CONNECTION,
     READY,
-    RUN,
+    TRACKING,
     SAVE_COORDINATES,
     USB_IDLE,
     USB_READ_DATA,
@@ -156,6 +156,13 @@ typedef struct
     PROGRAM_STATES tracker_State;
     /* TODO: Define any additional data used by the application. */
 } APP_DATA;
+
+typedef struct
+{
+    uint16_t degrees;
+	uint8_t  min;
+	uint8_t  sec;
+} s_CoordinatesParse;
 
 
 // *****************************************************************************

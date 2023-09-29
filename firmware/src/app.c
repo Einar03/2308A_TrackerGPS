@@ -258,6 +258,8 @@ void APP_Tasks ( void )
     //    GNSS
     //=====================================================
     static minmea_messages Messages;
+	static s_CoordinatesParse Latitude;
+	static s_CoordinatesParse Longitude;
 //    static char line[MINMEA_MAX_SENTENCE_LENGTH] = {0,0,0,0,0,0,0,0,0,0,
 //    0,0,0,0,0,0,0,0,0,0,
 //    0,0,0,0,0,0,0,0,0,0,
@@ -655,8 +657,8 @@ void APP_Tasks ( void )
                     // Si appui 1 fois sur le bouton GPS et et point de départ a été sauvegardé
                     else if((DescriptBtnGPS.nbTouch == 1) && (startPointSet == true))
                     {
-                        // Retour à l'état run pour l'acquisition des coordonnées
-                        appData.tracker_State = RUN;
+                        // Retour à l'état TRACKING pour l'acquisition des coordonnées
+                        appData.tracker_State = TRACKING;
                         // Reset flag
                         startPointSet = false;
 //                        DescriptBtnGPS.nbTouch = 0;
@@ -675,18 +677,18 @@ void APP_Tasks ( void )
                 //=====================================================
                 // Acquisition et savegarde de coordonnées selon l'intervalle de temps
                 //===================================================== 
-                case RUN:
+                case TRACKING:
                     if((SPI_GetState() == SPI_STATE_IDLE) && (EnablePrint == true))
                     {
                         LCD_EADOGS_Clear();
                         LCD_EADOGS_GoTo(&RegVal, 1, 1);
                         LCD_Printf("Tracking");
                         LCD_EADOGS_GoTo(&RegVal, 1, 2);
-                        LCD_Printf("%2d:%2d %2d/%2d/%4d", Messages.rmc.time.hours, Messages.rmc.time.minutes, Messages.rmc.date.day, Messages.rmc.date.month, Messages.rmc.date.year);
+                        LCD_Printf("%02d:%02d %02d/%02d/%4d", Messages.rmc.time.hours, Messages.rmc.time.minutes, Messages.rmc.date.day, Messages.rmc.date.month, Messages.rmc.date.year);
                         LCD_EADOGS_GoTo(&RegVal, 1, 3);
-                        LCD_Printf("%d", Messages.rmc.longitude.scale);
+                        LCD_Printf("N%02dº%02d'%02d\"", Latitude.degrees, Latitude.min, Latitude.sec);
                         LCD_EADOGS_GoTo(&RegVal, 1, 4);
-                        LCD_Printf("%d", Messages.rmc.longitude.value);
+                        LCD_Printf("N%02dº%02d'%02d\"", Longitude.degrees, Longitude.min, Longitude.sec);
                         EnablePrint = false;
                     }
                     Cnt = (Cnt + 1) % 100;
@@ -711,6 +713,15 @@ void APP_Tasks ( void )
                             if(Messages.rmc.valid == true)
                             {
                                 EnablePrint = true;
+								// Conversion des coordonnées
+								Latitude.degrees = (uint8_t) Messages.rmc.latitude.value / 100;
+								Latitude.min = (uint8_t) Messages.rmc.latitude.value - (Latitude.degrees * 100);
+								Latitude.sec = ((Messages.rmc.latitude.value - (Latitude.degrees * 100.0)) - (float)Latitude.min) * 60;
+								
+								Longitude.degrees = (uint8_t) Messages.rmc.longitude.value / 100;
+								Longitude.min = (uint8_t) Messages.rmc.longitude.value - (Latitude.degrees * 100);
+								Longitude.sec = ((Messages.rmc.longitude.value - (Latitude.degrees * 100.0)) - (float)Latitude.min) * 60;
+
                             }
     //                        SetBuffer(GnssData, dataSize);
                         }
@@ -763,8 +774,8 @@ void APP_Tasks ( void )
                     // Si sauvegarde du point selon intervalle de temps
                     else if((startPointSet == false) && (endPointSet == false))
                     {
-                        // Retourner dans l'état run
-                        appData.tracker_State = RUN;
+                        // Retourner dans l'état TRACKING
+                        appData.tracker_State = TRACKING;
                     }
                     break;
                 //=====================================================
