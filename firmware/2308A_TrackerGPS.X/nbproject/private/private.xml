@@ -3,13 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/minmea.c</file>
             <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/main.c</file>
             <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/app_SDCard.c</file>
             <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/app.c</file>
             <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/Mc32Debounce.c</file>
             <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/Mc32gest_UART.c</file>
-            <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/minmea.h</file>
             <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/app.h</file>
             <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/app_SDCard.h</file>
             <file>file:/C:/microchip/harmony/v2_06/apps/PROJ/2308A_TrackerGPS/firmware/src/EA_DOGS164A.c</file>

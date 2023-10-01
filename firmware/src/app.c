@@ -260,14 +260,7 @@ void APP_Tasks ( void )
     static minmea_messages Messages;
 	static s_CoordinatesParse Latitude;
 	static s_CoordinatesParse Longitude;
-//    static char line[MINMEA_MAX_SENTENCE_LENGTH] = {0,0,0,0,0,0,0,0,0,0,
-//    0,0,0,0,0,0,0,0,0,0,
-//    0,0,0,0,0,0,0,0,0,0,
-//    0,0,0,0,0,0,0,0,0,0,
-//    0,0,0,0,0,0,0,0,0,0,
-//    0,0,0,0,0,0,0,0,0,0,
-//    0,0,0,0,0,0,0,0,0,0,
-//    0,0,0,0,0,0,0,0,0,0};
+    uint32_t valTemp;
     
     // Compteur pour le clignotement des LEDs
     static uint8_t blinkCnt = 0;
@@ -561,7 +554,7 @@ void APP_Tasks ( void )
                         LCD_EADOGS_GoTo(&RegVal,1,2);
                         LCD_Printf("Sat=%2d", Messages.gsv.total_sats);
                         LCD_EADOGS_GoTo(&RegVal,1,3);
-                        LCD_Printf("CNO=%2d", Messages.gsv.sats[0].snr);
+                        LCD_Printf("CNO=%2d %2d %2d %2d", Messages.gsv.sats[0].snr, Messages.gsv.sats[1].snr, Messages.gsv.sats[2].snr, Messages.gsv.sats[3].snr);
 //                        LCD_EADOGS_GoTo(&RegVal,1,3);
 //                        LCD_Printf("N°36...");
 //                        LCD_EADOGS_GoTo(&RegVal,1,4);
@@ -714,13 +707,15 @@ void APP_Tasks ( void )
                             {
                                 EnablePrint = true;
 								// Conversion des coordonnées
-								Latitude.degrees = (uint8_t) Messages.rmc.latitude.value / 100;
-								Latitude.min = (uint8_t) Messages.rmc.latitude.value - (Latitude.degrees * 100);
-								Latitude.sec = ((Messages.rmc.latitude.value - (Latitude.degrees * 100.0)) - (float)Latitude.min) * 60;
+								Latitude.degrees = Messages.rmc.latitude.value / 10000000;
+                                valTemp = (Messages.rmc.latitude.value - (Latitude.degrees * 10000000));
+								Latitude.min = valTemp / 100000;
+								Latitude.sec = ((Messages.rmc.latitude.value - (Latitude.degrees * 10000000) - valTemp) * 60) / 1000000;
 								
 								Longitude.degrees = (uint8_t) Messages.rmc.longitude.value / 100;
-								Longitude.min = (uint8_t) Messages.rmc.longitude.value - (Latitude.degrees * 100);
-								Longitude.sec = ((Messages.rmc.longitude.value - (Latitude.degrees * 100.0)) - (float)Latitude.min) * 60;
+                                valTemp = (Messages.rmc.longitude.value - (Longitude.degrees * 10000000));
+								Longitude.min = valTemp / 100000;
+								Longitude.sec = ((Messages.rmc.longitude.value - (Longitude.degrees * 10000000) - valTemp) * 60) / 1000000;
 
                             }
     //                        SetBuffer(GnssData, dataSize);

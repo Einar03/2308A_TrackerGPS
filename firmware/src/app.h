@@ -161,7 +161,7 @@ typedef struct
 {
     uint16_t degrees;
 	uint8_t  min;
-	uint8_t  sec;
+	float    sec;
 } s_CoordinatesParse;
 
 
