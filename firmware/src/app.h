@@ -92,8 +92,11 @@ extern "C" {
 #define BAT_50          3.35
 #define BAT_30          3.21
 #define BAT_10          3.07
-#define BAT_TIME        300
+#define BAT_TIME         300
+#define LED_PER            2
+// USB
 #define USB_TIME_OUT     200
+    
     
 // *****************************************************************************
 /* Application states
@@ -159,6 +162,7 @@ typedef struct
 
 typedef struct
 {
+    uint8_t  direction;
     uint16_t degrees;
 	uint8_t  min;
 	float    sec;
@@ -251,6 +255,7 @@ void ResetBuffer(uint8_t *Buffer);
 APP_STATES AppGetState(void);
 void ScanButtons(S_SwitchDescriptor *DescriptButton, bool ButtonState);
 void ReadBattery(float *VBat);
+bool BuzzerPlay(uint16_t duration, uint8_t note);
 
 #endif /* _APP_H */
 

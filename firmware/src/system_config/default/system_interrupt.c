@@ -92,6 +92,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 void __ISR(_TIMER_1_VECTOR, ipl3AUTO) IntHandlerDrvTmrInstance0(void)
 {
     PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_1);
+    Timer1_CallBack();
     if(AppGetState() != APP_STATE_INIT)
     {
         APP_UpdateState(APP_STATE_SERVICE_TASKS);

@@ -515,13 +515,13 @@ void DRV_TMR2_Initialize(void)
     /* Select clock source */
     PLIB_TMR_ClockSourceSelect ( TMR_ID_3, TMR_CLOCK_SOURCE_PERIPHERAL_CLOCK );
     /* Select prescalar value */
-    PLIB_TMR_PrescaleSelect(TMR_ID_3, TMR_PRESCALE_VALUE_4);
+    PLIB_TMR_PrescaleSelect(TMR_ID_3, TMR_PRESCALE_VALUE_2);
     /* Enable 16 bit mode */
     PLIB_TMR_Mode16BitEnable(TMR_ID_3);
     /* Clear counter */ 
     PLIB_TMR_Counter16BitClear(TMR_ID_3);
     /*Set period */ 
-    PLIB_TMR_Period16BitSet(TMR_ID_3, 40746);
+    PLIB_TMR_Period16BitSet(TMR_ID_3, 7406);
     /* Setup Interrupt */   
     PLIB_INT_VectorPrioritySet(INT_ID_0, INT_VECTOR_T3, INT_DISABLE_INTERRUPT);
     PLIB_INT_VectorSubPrioritySet(INT_ID_0, INT_VECTOR_T3, INT_SUBPRIORITY_LEVEL0);          

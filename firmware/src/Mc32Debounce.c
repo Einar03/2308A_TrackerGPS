@@ -110,8 +110,9 @@ void DebounceInit (S_SwitchDescriptor *pDescriptor) {
    pDescriptor->DebounceCounter   = 0;
    pDescriptor->bits.KeyPressed        = 0;
    pDescriptor->bits.KeyReleased       = 0;
-   pDescriptor->bits.KeyPrevInputValue = 1;
-   pDescriptor->bits.KeyValue          = 1;
+   // Modification par Einar Farinas pour les boutons du 2308A Tracker GPS
+   pDescriptor->bits.KeyPrevInputValue = 0; // 1
+   pDescriptor->bits.KeyValue          = 0; // 1
 }
 
 //  DebounceGetInput  fourni l'état du switch aprés anti-rebond

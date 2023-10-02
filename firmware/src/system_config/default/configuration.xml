@@ -392,7 +392,7 @@
       <Template dnOrder="27">
         <Name dnOrder="0">system_config.h</Name>
         <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">B45D66DE88926E0DD7C3E0B5E6BC7B31</Checksum>
+        <Checksum dnOrder="2">47CCCC3E9E21587921347D00E3472956</Checksum>
         <ProjectFileChecksum dnOrder="3">544E91560F03C15FD7C99C7BB1B2FABA</ProjectFileChecksum>
       </Template>
       <Template dnOrder="28">
@@ -402,7 +402,7 @@
       <Template dnOrder="29">
         <Name dnOrder="0">drv_tmr_static.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default/framework/driver/tmr/src</Path>
-        <Checksum dnOrder="2">C2B90F229A0A0FE5F2069710A0E61A99</Checksum>
+        <Checksum dnOrder="2">0E51C495B8FAB2D6D6008D39FD22502D</Checksum>
       </Template>
       <Template dnOrder="30">
         <Name dnOrder="0">drv_spi_master_ebm_tasks.c</Name>
