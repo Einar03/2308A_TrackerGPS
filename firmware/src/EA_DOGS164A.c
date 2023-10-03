@@ -241,9 +241,9 @@ void LCD_EADOGS_ContrastSet(s_EADOGS_REG_VAL *registerValue, uint8_t contrast)
     // Envoi des données
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->power_Display_Contrast);
-    LCD_EADOGS_SendData(INSTRUCTION, (0x7A|(contrast &= 0x0F)));
-    ResetIS(registerValue);
-    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
+    LCD_EADOGS_SendData(INSTRUCTION, (0x7F|(contrast &= 0x0F)));
+//    ResetIS(registerValue);
+//    LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
 }
 /** 
   @Function
@@ -341,7 +341,7 @@ void LCD_EADOGS_Sleep(s_EADOGS_REG_VAL *registerValue)
 void LCD_EADOGS_WakeUp(s_EADOGS_REG_VAL *registerValue)
 {
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE1);
-    LCD_EADOGS_SendData(INSTRUCTION, SLEEP_DISABLE); // Bit1 indiqué dans le datasheet à vérifier si fonction
+    LCD_EADOGS_SendData(INSTRUCTION, SLEEP_DISABLE); // Bit1 indiqué dans le datasheet à vérifier si il fonction
     LCD_EADOGS_SendData(INSTRUCTION, registerValue->functionSet_RE0);
     LCD_EADOGS_SendData(INSTRUCTION, (registerValue->displayControl | BIT2));
 }

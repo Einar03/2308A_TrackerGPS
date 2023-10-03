@@ -1,9 +1,9 @@
 build/default/production/_ext/1360937237/EA_DOGS164A.o: \
  ../src/EA_DOGS164A.c ../src/EA_DOGS164A.h ../src/Mc32Delays.h \
  ../src/Mc32_SPI_StateMachine.h \
- ../src/system_config/default/system_definitions.h \
- ../../../../../framework/system/common/sys_common.h \
  ../../../../../framework/system/common/sys_module.h \
+ ../../../../../framework/system/common/sys_common.h \
+ ../src/system_config/default/system_definitions.h \
  ../../../../../framework/driver/oc/drv_oc.h \
  ../src/system_config/default/system_config.h \
  ../../../../../framework/driver/driver_common.h \
@@ -309,11 +309,11 @@ build/default/production/_ext/1360937237/EA_DOGS164A.o: \
 
 ../src/Mc32_SPI_StateMachine.h:
 
-../src/system_config/default/system_definitions.h:
+../../../../../framework/system/common/sys_module.h:
 
 ../../../../../framework/system/common/sys_common.h:
 
-../../../../../framework/system/common/sys_module.h:
+../src/system_config/default/system_definitions.h:
 
 ../../../../../framework/driver/oc/drv_oc.h:
 

@@ -85,15 +85,24 @@ extern "C" {
 #define TIME_SPAN_MAX   900 // pour 15 min (900)
 #define TIME_SPAN_MIN    30 // pour 15 min (900) 
 #define BLINK_PER        30 // Pour 10 Hz (10 == 100 ms)
+// Pour incrémentation/décrémentation de l'intervalle de temps ou le niveau du backlight
+// lors qu'on mantient appuyée sur le bouton
+#define INCREMENT_HOLD_SPAN   7
+// Pour le temps minimum requis de mantient sur un bouton, pour incrémenter/décrémenter
+// l'intervalle de temps ou le niveau du backlight en continu 
+#define HOLD_MIN_TIME    100
 // Niveau de batterie
-#define BAT_CHARGING    4.20
-#define BAT_100         3.70
-#define BAT_90          3.63
-#define BAT_50          3.35
-#define BAT_30          3.21
-#define BAT_10          3.07
-#define BAT_TIME         300
+#define BAT_100         4.20  
+#define BAT_90          4.08
+#define BAT_50          3.60
+#define BAT_30          3.36
+#define BAT_10          3.12
+#define BAT_0           3.00
+#define BAT_TIME         300      // 300 pour 3s 
 #define LED_PER            2
+// LCD
+#define BACKLIGHT_LVL_MAX 100
+#define BACKLIGHT_LVL_MIN   0
 // USB
 #define USB_TIME_OUT     200
     
@@ -115,6 +124,7 @@ typedef enum
 	APP_STATE_INIT=0,
 	APP_STATE_SERVICE_TASKS,
     APP_STATE_WAIT,
+    APP_STATE_OFF,
             
 	/* TODO: Define states used by the application state machine. */
 
@@ -122,7 +132,6 @@ typedef enum
 
 typedef enum
 {
-	/* Application's state machine's initial state. */
     INIT = 0,
 	IDLE,
 	WAIT_FOR_CONNECTION,
@@ -134,10 +143,16 @@ typedef enum
     USB_SEND_DATA,
     CONFIG,
     SAVE_CONFIG,
-            
-	/* TODO: Define states used by the application state machine. */
-
 } PROGRAM_STATES;
+
+typedef enum
+{
+    START_MENU_1 = 0,
+    START_MENU_2,
+    TIME_SPAN,
+    BACKLIGHT,
+            
+} MENU_STATES;
 
 // *****************************************************************************
 /* Application Data

@@ -1,5 +1,7 @@
 build/default/production/_ext/1360937237/Mc32_SPI_StateMachine.o: \
  ../src/Mc32_SPI_StateMachine.c ../src/Mc32_SPI_StateMachine.h \
+ ../../../../../framework/system/common/sys_module.h \
+ ../../../../../framework/system/common/sys_common.h \
  ../../../../../framework/peripheral/spi/plib_spi.h \
  ../../../../../framework/peripheral/spi/processor/spi_processor.h \
  ../../../../../framework/peripheral/spi/processor/spi_p32xxxx.h \
@@ -48,8 +50,6 @@ build/default/production/_ext/1360937237/Mc32_SPI_StateMachine.o: \
  ../../../../../framework/peripheral/spi/processor/../templates/spi_Buffer16bit_Default.h \
  ../../../../../framework/system/clk/sys_clk.h \
  ../src/system_config/default/system_config.h \
- ../../../../../framework/system/common/sys_module.h \
- ../../../../../framework/system/common/sys_common.h \
  ../../../../../framework/peripheral/osc/plib_osc.h \
  ../../../../../framework/peripheral/osc/processor/osc_processor.h \
  ../../../../../framework/peripheral/osc/processor/osc_p32xxxx.h \
@@ -300,9 +300,22 @@ build/default/production/_ext/1360937237/Mc32_SPI_StateMachine.o: \
  ../../../../../framework/driver/spi/drv_spi_definitions.h \
  ../../../../../framework/driver/sdcard/drv_sdcard_mapping.h ../src/app.h \
  ../src/system_config/default/system_definitions.h ../src/Mc32Debounce.h \
- ../src/app_sdcard.h
+ ../src/app_sdcard.h \
+ ../../../../../framework/driver/spi/src/dynamic/drv_spi_internal.h \
+ ../../../../../framework/osal/osal.h \
+ ../../../../../framework/osal/osal_definitions.h \
+ ../../../../../framework/osal/osal_impl_basic.h \
+ ../../../../../framework/driver/spi/src/drv_spi_sys_queue.h \
+ ../../../../../framework/driver/spi/src/drv_spi_variant_mapping.h \
+ ../../../../../framework/driver/sdcard/src/drv_sdcard_local.h \
+ ../../../../../framework/driver/sdcard/src/drv_sdcard_variant_mapping.h \
+ ../src/Mc32Delays.h
 
 ../src/Mc32_SPI_StateMachine.h:
+
+../../../../../framework/system/common/sys_module.h:
+
+../../../../../framework/system/common/sys_common.h:
 
 ../../../../../framework/peripheral/spi/plib_spi.h:
 
@@ -399,10 +412,6 @@ build/default/production/_ext/1360937237/Mc32_SPI_StateMachine.o: \
 ../../../../../framework/system/clk/sys_clk.h:
 
 ../src/system_config/default/system_config.h:
-
-../../../../../framework/system/common/sys_module.h:
-
-../../../../../framework/system/common/sys_common.h:
 
 ../../../../../framework/peripheral/osc/plib_osc.h:
 
@@ -909,3 +918,21 @@ build/default/production/_ext/1360937237/Mc32_SPI_StateMachine.o: \
 ../src/Mc32Debounce.h:
 
 ../src/app_sdcard.h:
+
+../../../../../framework/driver/spi/src/dynamic/drv_spi_internal.h:
+
+../../../../../framework/osal/osal.h:
+
+../../../../../framework/osal/osal_definitions.h:
+
+../../../../../framework/osal/osal_impl_basic.h:
+
+../../../../../framework/driver/spi/src/drv_spi_sys_queue.h:
+
+../../../../../framework/driver/spi/src/drv_spi_variant_mapping.h:
+
+../../../../../framework/driver/sdcard/src/drv_sdcard_local.h:
+
+../../../../../framework/driver/sdcard/src/drv_sdcard_variant_mapping.h:
+
+../src/Mc32Delays.h:

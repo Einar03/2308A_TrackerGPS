@@ -22,7 +22,7 @@
 #define _MC32_SPI_STATEMACHINE_H
 
 #include <stdint.h>
-
+#include "system/common/sys_module.h"
 
 /* ************************************************************************** */
 /* ************************************************************************** */
@@ -40,6 +40,7 @@ typedef enum
     SPI_STATE_BUSY_WRITE,        
     SPI_STATE_BUSY_READ_WRITE,
     SPI_STATE_BUSY_READ,
+    SPI_STATE_READY,
 } SPI_STATES;
 
 

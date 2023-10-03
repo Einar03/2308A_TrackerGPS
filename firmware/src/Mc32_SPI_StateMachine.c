@@ -26,6 +26,9 @@
 //#include "system_config.h"
 //#include "system_config/default/system_config.h"
 #include "system_config/default/system_definitions.h"
+#include "driver/spi/src/dynamic/drv_spi_internal.h"
+#include "driver/sdcard/src/drv_sdcard_local.h"
+#include "Mc32Delays.h"
 
 // Ajout Einar Farinas
 
@@ -44,6 +47,8 @@ SPI_STATES spiState = SPI_STATE_UNINITIALIZED;
 DRV_HANDLE lcdHandle;
 DRV_SPI_BUFFER_HANDLE lcdBufferHandle,bufferhandle;
 DRV_SPI_CLIENT_DATA lcdCfgData;
+
+
 
 //fonction à appeler 1x au démarrage pour init.
 //code repris de la génération du driver par Hamony 1.08
@@ -178,7 +183,6 @@ void SPI_DoTasks(void)
             if(lcdHandle != DRV_HANDLE_INVALID)
             {
                 lcdCfgData.baudRate = 1000000;
-////                SPI_Init();
                 DRV_SPI_ClientConfigure(lcdHandle, &lcdCfgData);
                 spiState = SPI_STATE_IDLE;
             }
@@ -187,6 +191,14 @@ void SPI_DoTasks(void)
 //            spiState = SPI_STATE_IDLE;
             break;
         case SPI_STATE_IDLE:
+            // Contrôle si le SPI n'est pas utilisé
+            if(!PLIB_SPI_IsBusy(KitSpi1))
+            {
+                spiState = SPI_STATE_READY;
+            }
+            break;
+        case SPI_STATE_READY:
+            
             // Rien faire
             break;
         case SPI_STATE_IDLE_READ_DATA_AVAILABLE:
@@ -204,16 +216,12 @@ void SPI_DoTasks(void)
 ////                   spiState = SPI_STATE_UNINITIALIZED;
 ////               }
 //            }
-            if(DRV_SPI_BUFFER_EVENT_COMPLETE & DRV_SPI_BufferStatus(bufferhandle))
+            if(DRV_SPI_BUFFER_EVENT_COMPLETE == DRV_SPI_BufferStatus(bufferhandle))
             {
                 CS_LCDOn();
                 spiState = SPI_STATE_IDLE;
             }
-//            if(DRV_SPI_Status(lcdHandle) == SYS_STATUS_READY)
-//            {
-//                CS_LCDOn();
-//                spiState = SPI_STATE_IDLE;
-//            }
+            
             break;
         case SPI_STATE_BUSY_READ_WRITE:
             if(!PLIB_SPI_IsBusy(KitSpi1) && !PLIB_SPI_ReceiverFIFOIsEmpty(KitSpi1))
